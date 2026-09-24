@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Hệ Thống Quản Lý & Tra Cứu Đơn Hàng Kho Pro</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Html5-qrcode CDN -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    /* Custom scrollbar cho table */
+    ::-webkit-scrollbar { height: 6px; width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    #reader video { object-fit: cover !important; border-radius: 0.5rem; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen antialiased">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-500/30">
+          <i data-lucide="box" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-base md:text-lg font-bold tracking-tight text-white leading-none">WMS Express Tracking</h1>
+          <p class="text-[11px] text-slate-400 mt-1">Hệ thống quản lý đơn kho SPX • GHN • Viettel Post • J&T</p>
+        </div>
+      </div>
+      
+      <div class="hidden md:flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Sẵn sàng hoạt động
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-3 md:px-6 py-5 space-y-5">
+
+    <!-- Top Grid: Form Thêm Đơn + Biểu Đồ % Hình Tròn -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      
+      <!-- Form Thêm Mã Vận Đơn (Chiếm 2 cột trên PC) -->
+      <section class="lg:col-span-2 bg-white p-4 md:p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm md:text-base font-bold text-slate-800 flex items-center gap-2">
+              <i data-lucide="barcode" class="w-5 h-5 text-indigo-600"></i> Tiếp Nhận Mã Vận Đơn
+            </h2>
+            <span class="text-xs text-slate-400">Nhập thủ công hoặc Quét mã</span>
+          </div>
+
+          <form id="addOrderForm" onsubmit="handleAddOrder(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- Mã vận đơn -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Mã vận đơn (*)</label>
+              <div class="flex gap-2">
+                <input type="text" id="inputTracking" required placeholder="Dán hoặc quét mã tại đây..." 
+                       class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition font-mono font-medium" />
+                <button type="button" onclick="openScannerModal()" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition shrink-0">
+                  <i data-lucide="scan-line" class="w-4 h-4"></i> Quét
+                </button>
+              </div>
+            </div>
+
+            <!-- Đơn vị vận chuyển -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Đơn vị vận chuyển (*)</label>
+              <select id="inputCarrier" required class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium text-slate-700">
+                <option value="GHN">GHN (Giao Hàng Nhanh)</option>
+                <option value="SPX">SPX (Shopee Express)</option>
+                <option value="VIETTELPOST">Viettel Post</option>
+                <option value="JT">J&T Express</option>
+              </select>
+            </div>
+
+            <!-- Ghi chú -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Ghi chú kèm theo</label>
+              <input type="text" id="inputNote" placeholder="Ví dụ: Tên sản phẩm, tên khách hàng..." 
+                     class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition" />
+            </div>
+
+            <!-- Button Thêm -->
+            <div class="flex items-end">
+              <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i> Lưu Vào Kho
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Biểu đồ Hình Tròn % (Donut Chart) Pro -->
+      <section class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Thống Kê Đơn Trong Ngày</h3>
+          <span class="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md" id="currentDateText">--/--/----</span>
+        </div>
+
+        <div class="flex items-center justify-around my-2 py-1">
+          <!-- Donut SVG -->
+          <div class="relative w-28 h-28 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <!-- Vòng tròn nền -->
+              <path class="text-slate-100" stroke-width="3.8" stroke="currentColor" fill="none" 
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <!-- Vòng tròn phần trăm có hiệu ứng -->
+              <path id="circleProgress" class="text-indigo-600 transition-all duration-1000 ease-out" 
+                    stroke-dasharray="0, 100" stroke-width="3.8" stroke-linecap="round" stroke="currentColor" fill="none" 
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <!-- Con số % chính giữa -->
+            <div class="absolute flex flex-col items-center justify-center text-center">
+              <span id="circlePercentText" class="text-xl font-extrabold text-slate-900 leading-none">0%</span>
+              <span class="text-[10px] text-slate-400 font-semibold mt-0.5">Tỷ lệ hôm nay</span>
+            </div>
+          </div>
+
+          <!-- Chi tiết chỉ số -->
+          <div class="space-y-2.5">
+            <div>
+              <p class="text-[11px] font-medium text-slate-400">Tổng đang theo dõi</p>
+              <p class="text-2xl font-black text-slate-800 leading-tight" id="statTotal">0</p>
+            </div>
+            <div class="border-t border-slate-100 pt-1.5">
+              <p class="text-[11px] font-medium text-indigo-600">Nhập trong hôm nay</p>
+              <p class="text-base font-bold text-slate-700" id="statTodayCount">0 <span class="text-xs font-normal text-slate-400">đơn</span></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Bảng Danh Sách Đơn Hàng Kho -->
+    <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      
+      <!-- Filter Bar -->
+      <div class="p-4 bg-slate-50/50 border-b border-slate-200/80 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div class="relative w-full sm:w-80">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
+          <input type="text" id="searchInput" oninput="renderTable()" placeholder="Tìm kiếm mã vận đơn, ghi chú..." 
+                 class="w-full pl-10 pr-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition shadow-sm" />
+        </div>
+        
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <select id="filterCarrier" onchange="renderTable()" class="w-full sm:w-auto px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl font-medium text-slate-700 focus:outline-none shadow-sm">
+            <option value="ALL">Tất cả nhà vận chuyển</option>
+            <option value="GHN">Giao Hàng Nhanh (GHN)</option>
+            <option value="SPX">Shopee Express (SPX)</option>
+            <option value="VIETTELPOST">Viettel Post</option>
+            <option value="JT">J&T Express</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table Content -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-100/70 text-[11px] uppercase font-bold text-slate-500 tracking-wider border-b border-slate-200">
+            <tr>
+              <th class="px-4 py-3.5 w-12 text-center">STT</th>
+              <th class="px-4 py-3.5">Mã Vận Đơn</th>
+              <th class="px-4 py-3.5">Đơn Vị VC</th>
+              <th class="px-4 py-3.5 min-w-[200px]">Ghi Chú (Bấm để sửa)</th>
+              <th class="px-4 py-3.5">Ngày Nhập Kho</th>
+              <th class="px-4 py-3.5 text-center">Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody id="orderTableBody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+            <!-- Render JS -->
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Empty State -->
+      <div id="emptyState" class="p-12 text-center hidden">
+        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
+          <i data-lucide="package-open" class="w-8 h-8"></i>
+        </div>
+        <p class="text-slate-600 font-semibold text-sm">Chưa tìm thấy đơn hàng nào</p>
+        <p class="text-slate-400 text-xs mt-1">Hãy thêm mã vận đơn mới hoặc quét mã vạch trên bưu kiện.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal Quét Mã Vạch Chuẩn Đa Nền Tảng (Sửa lỗi màn hình đen) -->
+  <div id="scannerModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 transition-opacity">
+    <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-100 flex flex-col">
+      
+      <!-- Header Modal -->
+      <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        <div class="flex items-center gap-2">
+          <i data-lucide="camera" class="w-5 h-5 text-indigo-600"></i>
+          <h3 class="font-bold text-slate-800 text-sm md:text-base">Quét Mã Vạch Bưu Kiện</h3>
+        </div>
+        <button onclick="closeScannerModal()" class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Live Video Viewport -->
+      <div class="p-4 bg-slate-900 relative flex flex-col items-center justify-center min-h-[280px]">
+        <div id="reader" class="w-full rounded-xl overflow-hidden bg-black border border-slate-700"></div>
+        <p id="scannerStatusText" class="text-xs text-slate-300 mt-3 text-center">Đang kết nối camera...</p>
+      </div>
+
+      <!-- Nút Chụp/Chọn Ảnh Dự Phòng (Đảm bảo 100% không lo bị đơ/đen) -->
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2 text-center">
+        <p class="text-[11px] text-slate-500">Nếu camera không hiển thị, hãy chụp/chọn ảnh mã vạch trực tiếp:</p>
+        <label class="w-full bg-slate-800 hover:bg-slate-700 active:scale-98 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-sm">
+          <i data-lucide="image" class="w-4 h-4 text-yellow-400"></i> Chụp Hoặc Chọn Ảnh Mã Vạch
+          <input type="file" id="qrFileInput" accept="image/*" capture="environment" class="hidden" onchange="scanImageFile(this)" />
+        </label>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    let orders = JSON.parse(localStorage.getItem('my_orders_v3')) || [
+      { trackingNo: '862490685404', carrier: 'JT', dateAdded: new Date().toLocaleDateString('vi-VN'), note: 'Đơn hàng mẫu J&T' }
+    ];
+    let html5QrCode = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      document.getElementById('currentDateText').innerText = new Date().toLocaleDateString('vi-VN');
+      renderTable();
+      updateStats();
+    });
+
+    function saveToLocalStorage() {
+      localStorage.setItem('my_orders_v3', JSON.stringify(orders));
+      renderTable();
+      updateStats();
+    }
+
+    // Thêm đơn hàng
+    function handleAddOrder(e) {
+      e.preventDefault();
+      const trackingNo = document.getElementById('inputTracking').value.trim();
+      const carrier = document.getElementById('inputCarrier').value;
+      const note = document.getElementById('inputNote').value.trim();
+
+      if (!trackingNo) return;
+
+      const newOrder = {
+        trackingNo,
+        carrier,
+        dateAdded: new Date().toLocaleDateString('vi-VN'),
+        note
+      };
+
+      orders.unshift(newOrder);
+      saveToLocalStorage();
+
+      document.getElementById('inputTracking').value = '';
+      document.getElementById('inputNote').value = '';
+    }
+
+    // Sửa ghi chú trực tiếp
+    function updateNote(index, value) {
+      orders[index].note = value;
+      localStorage.setItem('my_orders_v3', JSON.stringify(orders));
+    }
+
+    // Xóa đơn hàng
+    function deleteOrder(index) {
+      if (confirm('Bạn có chắc chắn muốn xóa mã vận đơn này khỏi danh sách?')) {
+        orders.splice(index, 1);
+        saveToLocalStorage();
+      }
+    }
+
+    // Cập nhật Bảng
+    function renderTable() {
+      const tbody = document.getElementById('orderTableBody');
+      const emptyState = document.getElementById('emptyState');
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const filterCarrier = document.getElementById('filterCarrier').value;
+
+      tbody.innerHTML = '';
+
+      const filteredOrders = orders.filter(item => {
+        const matchSearch = item.trackingNo.toLowerCase().includes(search) || (item.note && item.note.toLowerCase().includes(search));
+        const matchCarrier = filterCarrier === 'ALL' || item.carrier === filterCarrier;
+        return matchSearch && matchCarrier;
+      });
+
+      if (filteredOrders.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      filteredOrders.forEach((item, index) => {
+        const realIndex = orders.indexOf(item);
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/80 transition border-b border-slate-100/80";
+
+        tr.innerHTML = `
+          <td class="px-4 py-3.5 text-slate-400 text-xs text-center font-mono">${index + 1}</td>
+          <td class="px-4 py-3.5 font-mono font-bold text-slate-800 text-sm tracking-wide">${item.trackingNo}</td>
+          <td class="px-4 py-3.5">${getCarrierBadge(item.carrier)}</td>
+          <td class="px-4 py-3.5">
+            <input type="text" value="${item.note || ''}" onchange="updateNote(${realIndex}, this.value)" 
+                   class="w-full bg-transparent border-b border-transparent hover:border-indigo-300 focus:border-indigo-600 focus:bg-white focus:outline-none text-xs text-slate-700 py-1 px-1 rounded transition" 
+                   placeholder="Thêm ghi chú..." />
+          </td>
+          <td class="px-4 py-3.5 text-xs text-slate-500 font-medium">${item.dateAdded}</td>
+          <td class="px-4 py-3.5 text-center">
+            <button onclick="deleteOrder(${realIndex})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Xóa đơn">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      lucide.createIcons();
+    }
+
+    // Badge Nhà Vận Chuyển Pro
+    function getCarrierBadge(carrier) {
+      const badges = {
+        'GHN': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60">GHN</span>',
+        'SPX': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200/60">SPX</span>',
+        'VIETTELPOST': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-red-50 text-red-700 border border-red-200/60">Viettel Post</span>',
+        'JT': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">J&T Express</span>'
+      };
+      return badges[carrier] || carrier;
+    }
+
+    // Cập nhật Thống kê Biểu Đồ Tròn SVG
+    function updateStats() {
+      const total = orders.length;
+      const todayStr = new Date().toLocaleDateString('vi-VN');
+      const todayCount = orders.filter(o => o.dateAdded === todayStr).length;
+      const percent = total > 0 ? Math.round((todayCount / total) * 100) : 0;
+
+      document.getElementById('statTotal').innerText = total;
+      document.getElementById('statTodayCount').innerText = todayCount;
+      document.getElementById('circlePercentText').innerText = percent + '%';
+
+      // Cập nhật đường cong SVG
+      const circleProgress = document.getElementById('circleProgress');
+      circleProgress.setAttribute('stroke-dasharray', `${percent}, 100`);
+    }
+
+    // --- Xử lý Camera & Quét Mã Vạch Chuẩn ---
+    function openScannerModal() {
+      const modal = document.getElementById('scannerModal');
+      modal.classList.remove('hidden');
+      document.getElementById('scannerStatusText').innerText = "Đang khởi tạo camera...";
+
+      // Trễ 150ms để DOM vẽ xong kích thước khung #reader trước khi bật camera
+      setTimeout(() => {
+        if (html5QrCode) {
+          try { html5QrCode.clear(); } catch(e){}
+        }
+
+        html5QrCode = new Html5Qrcode("reader");
+
+        // Cấu hình quét tối ưu
+        const config = { 
+          fps: 15, 
+          qrbox: { width: 260, height: 130 }
+        };
+
+        // Ưu tiên chọn Camera sau
+        Html5Qrcode.getCameras().then(devices => {
+          if (devices && devices.length > 0) {
+            // Lấy camera sau cùng (thường là camera lưng)
+            let backCamera = devices[devices.length - 1];
+            html5QrCode.start(
+              backCamera.id, 
+              config, 
+              onScanSuccess, 
+              onScanFailure
+            ).catch(err => fallbackCameraStart(config));
+          } else {
+            fallbackCameraStart(config);
+          }
+        }).catch(err => {
+          fallbackCameraStart(config);
+        });
+
+      }, 150);
+    }
+
+    function fallbackCameraStart(config) {
+      html5QrCode.start(
+        { facingMode: "environment" }, 
+        config, 
+        onScanSuccess, 
+        onScanFailure
+      ).then(() => {
+        document.getElementById('scannerStatusText').innerText = "Hướng camera vào mã vạch bưu kiện";
+      }).catch(err => {
+        document.getElementById('scannerStatusText').innerText = "Không thể mở camera live. Vui lòng chọn ảnh bên dưới.";
+      });
+    }
+
+    function onScanSuccess(decodedText) {
+      document.getElementById('inputTracking').value = decodedText;
+      closeScannerModal();
+    }
+
+    function onScanFailure(error) {
+      // Bỏ qua lỗi quét dở khung hình
+    }
+
+    // Quét mã bằng ảnh chụp trực tiếp (Phương án dự phòng 100% thành công)
+    function scanImageFile(input) {
+      if (input.files && input.files.length > 0) {
+        const imageFile = input.files[0];
+        document.getElementById('scannerStatusText').innerText = "Đang phân tích hình ảnh...";
+
+        if (!html5QrCode) {
+          html5QrCode = new Html5Qrcode("reader");
+        }
+
+        html5QrCode.scanFile(imageFile, true)
+          .then(decodedText => {
+            onScanSuccess(decodedText);
+          })
+          .catch(err => {
+            alert("Không tìm thấy mã vạch rõ ràng trong ảnh. Vui lòng thử chụp lại cận cảnh.");
+            document.getElementById('scannerStatusText').innerText = "Thử lại hoặc dùng camera trực tiếp.";
+          });
+      }
+    }
+
+    function closeScannerModal() {
+      document.getElementById('scannerModal').classList.add('hidden');
+      if (html5QrCode) {
+        try {
+          html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+            html5QrCode = null;
+          }).catch(() => {
+            html5QrCode.clear();
+            html5QrCode = null;
+          });
+        } catch(e) {
+          html5QrCode = null;
+        }
+      }
+    }
+  </script>
+</body>
+</html>

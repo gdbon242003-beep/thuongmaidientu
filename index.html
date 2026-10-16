@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý Xuất - Nhập - Tồn Kho & Quét Mã Vạch</title>
+    <title>Hệ Thống Quản Lý Xuất - Nhập - Tồn Kho & Quét Mã Vạch / SKU</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js -->
@@ -39,7 +39,7 @@
                 </div>
                 <div>
                     <h1 class="text-white font-bold text-lg md:text-xl tracking-wide">QUẢN LÝ XUẤT - NHẬP - TỒN</h1>
-                    <p class="text-indigo-200 text-xs">Hệ thống quét mã vạch thông minh & Xuất Phiếu Hi Sports</p>
+                    <p class="text-indigo-200 text-xs">Hệ thống quét SKU / Mã vạch thông minh & Xuất Phiếu Hi Sports</p>
                 </div>
             </div>
             
@@ -82,7 +82,7 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng Sản Phẩm</p>
                         <h3 class="text-2xl font-bold text-slate-800 mt-1" x-text="products.length">0</h3>
-                        <span class="text-xs text-indigo-600 font-medium mt-1 inline-block">Mã hàng quản lý</span>
+                        <span class="text-xs text-indigo-600 font-medium mt-1 inline-block">Mã SKU/Barcode quản lý</span>
                     </div>
                     <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
                         <i class="fa-solid fa-box"></i>
@@ -132,7 +132,7 @@
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </span>
-                            <input type="text" x-model="stockSearch" placeholder="Tìm tên hoặc mã barcode..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                            <input type="text" x-model="stockSearch" placeholder="Tìm tên, SKU hoặc mã barcode..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                         </div>
                         <button @click="exportWordDocx()" class="bg-blue-800 hover:bg-blue-900 text-white px-3.5 py-2 rounded-xl text-sm font-medium transition flex items-center gap-1.5 whitespace-nowrap shadow">
                             <i class="fa-solid fa-file-word"></i> Xuất File Word (Hi Sports)
@@ -144,7 +144,7 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
-                                <th class="py-3.5 px-4 font-semibold">Mã Barcode</th>
+                                <th class="py-3.5 px-4 font-semibold">SKU / Barcode</th>
                                 <th class="py-3.5 px-4 font-semibold">Tên Sản Phẩm</th>
                                 <th class="py-3.5 px-4 font-semibold">Danh Mục</th>
                                 <th class="py-3.5 px-4 font-semibold text-center">ĐVT</th>
@@ -152,12 +152,16 @@
                                 <th class="py-3.5 px-4 font-semibold text-right">Tổng Xuất</th>
                                 <th class="py-3.5 px-4 font-semibold text-right">Tồn Kho</th>
                                 <th class="py-3.5 px-4 font-semibold text-center">Trạng Thái</th>
+                                <th class="py-3.5 px-4 font-semibold text-center">Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200 text-sm">
-                            <template x-for="item in filteredStock" :key="item.barcode">
+                            <template x-for="item in filteredStock" :key="item.id || item.sku">
                                 <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="py-3 px-4 font-mono font-medium text-indigo-600" x-text="item.barcode"></td>
+                                    <td class="py-3 px-4">
+                                        <div class="font-mono font-bold text-indigo-600" x-text="item.sku || '---'"></div>
+                                        <div class="font-mono text-xs text-slate-400" x-show="item.barcode" x-text="'BC: ' + item.barcode"></div>
+                                    </td>
                                     <td class="py-3 px-4 font-medium text-slate-800" x-text="item.name"></td>
                                     <td class="py-3 px-4 text-slate-600" x-text="item.category"></td>
                                     <td class="py-3 px-4 text-center text-slate-600" x-text="item.unit"></td>
@@ -169,11 +173,16 @@
                                               :class="item.stock <= 0 ? 'bg-rose-100 text-rose-700' : (item.stock < 5 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')"
                                               x-text="item.stock <= 0 ? 'Hết hàng' : (item.stock < 5 ? 'Sắp hết' : 'Còn hàng')"></span>
                                     </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button @click="deleteProductCompletely(item)" class="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 transition font-medium text-xs flex items-center justify-center gap-1 mx-auto" title="Xóa toàn bộ sản phẩm nhập sai này">
+                                            <i class="fa-solid fa-trash-can"></i> Xóa SP
+                                        </button>
+                                    </td>
                                 </tr>
                             </template>
                             <template x-if="filteredStock.length === 0">
                                 <tr>
-                                    <td colspan="8" class="py-8 text-center text-slate-400">Không tìm thấy sản phẩm nào phù hợp trong kho.</td>
+                                    <td colspan="9" class="py-8 text-center text-slate-400">Không tìm thấy sản phẩm nào phù hợp trong kho.</td>
                                 </tr>
                             </template>
                         </tbody>
@@ -185,52 +194,110 @@
         <!-- ================= TAB 2: NHẬP KHO ================= -->
         <div x-show="activeTab === 'import'" x-cloak>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Form Nhập Kho -->
+                <!-- Form Nhập Kho Thông Minh -->
                 <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="font-bold text-lg text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-cart-arrow-down text-indigo-600"></i> Phiếu Nhập Kho
                         </h2>
                         <button @click="startScanner('import')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-camera"></i> Quét Barcode
+                            <i class="fa-solid fa-camera"></i> Quét Barcode/SKU
                         </button>
                     </div>
 
-                    <form @submit.prevent="submitTransaction('IMPORT')" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã Barcode sản phẩm</label>
-                            <div class="flex gap-2">
-                                <input type="text" x-model="form.barcode" @input="lookupProductByBarcode()" placeholder="Nhập hoặc quét barcode..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500 font-mono">
-                                <button type="button" @click="startScanner('import')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-sm shadow transition">
-                                    <i class="fa-solid fa-barcode"></i>
+                    <!-- Ô Chọn Nhanh Sản Phẩm Đã Có -->
+                    <div class="relative mb-4" x-data="{ openImportDropdown: false }">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Chọn nhanh sản phẩm đã từng nhập</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                            </span>
+                            <input type="text" 
+                                   x-model="importSearchKey" 
+                                   @focus="openImportDropdown = true" 
+                                   @click.away="openImportDropdown = false"
+                                   placeholder="Gõ SKU hoặc tên sản phẩm đã có..." 
+                                   class="w-full pl-9 pr-8 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500 bg-white">
+                            <template x-if="importSearchKey">
+                                <button type="button" @click="resetImportForm()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                                    <i class="fa-solid fa-xmark"></i>
                                 </button>
+                            </template>
+                        </div>
+
+                        <!-- Dropdown Danh Sách Sản Phẩm Tồn Tại -->
+                        <div x-show="openImportDropdown && filteredImportProducts.length > 0" 
+                             class="absolute z-30 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto divide-y divide-slate-100" x-cloak>
+                            <template x-for="item in filteredImportProducts" :key="item.id || item.sku">
+                                <div @click="selectProductForImport(item); openImportDropdown = false;" 
+                                     class="p-2.5 hover:bg-indigo-50 cursor-pointer flex justify-between items-center transition text-xs">
+                                    <div>
+                                        <p class="font-bold text-slate-800" x-text="item.name"></p>
+                                        <p class="text-indigo-600 font-mono text-[11px]" x-text="'SKU: ' + (item.sku || 'N/A') + (item.barcode ? ' | BC: ' + item.barcode : '')"></p>
+                                    </div>
+                                    <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded-lg" x-text="'Tồn: ' + item.stock + ' ' + item.unit"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Thẻ Thông Báo Tự Động Nhận Diện -->
+                    <template x-if="isExistingProduct">
+                        <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-xs flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                                <div>
+                                    <p class="font-bold">Sản phẩm đã có trong hệ thống!</p>
+                                    <p class="text-[11px] text-emerald-700">Thông tin tên, ĐVT, giá đã tự động điền. Bạn chỉ cần nhập số lượng thêm.</p>
+                                </div>
+                            </div>
+                            <button @click="deleteProductCompletelyCurrentForm()" type="button" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-semibold text-[11px] whitespace-nowrap transition">
+                                <i class="fa-solid fa-trash-can"></i> Xóa SP Nhập Sai
+                            </button>
+                        </div>
+                    </template>
+
+                    <form @submit.prevent="submitTransaction('IMPORT')" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã SKU Sản Phẩm</label>
+                                <input type="text" x-model="form.sku" @input="lookupProductBySkuOrBarcode()" placeholder="Ví dụ: SP-001..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500 font-mono font-bold text-indigo-600 uppercase">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã Barcode (Quét)</label>
+                                <div class="flex gap-1">
+                                    <input type="text" x-model="form.barcode" @input="lookupProductBySkuOrBarcode()" placeholder="Barcode..." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500 font-mono">
+                                    <button type="button" @click="startScanner('import')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-sm shadow transition">
+                                        <i class="fa-solid fa-barcode"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Tên sản phẩm</label>
-                            <input type="text" x-model="form.name" placeholder="Tự động điền hoặc nhập mới..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500 bg-slate-50">
+                            <input type="text" x-model="form.name" :readonly="isExistingProduct" placeholder="Tên sản phẩm..." required :class="isExistingProduct ? 'bg-slate-100 text-slate-700 font-medium' : 'bg-white'" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Số lượng nhập</label>
-                                <input type="number" min="1" x-model.number="form.quantity" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500 font-bold text-indigo-600">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Số lượng nhập thêm</label>
+                                <input type="number" min="1" x-model.number="form.quantity" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500 font-bold text-emerald-600 text-base">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Đơn vị tính</label>
-                                <input type="text" x-model="form.unit" placeholder="Cái, Hộp, Kg..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                                <input type="text" x-model="form.unit" :readonly="isExistingProduct" placeholder="Cái, Hộp..." required :class="isExistingProduct ? 'bg-slate-100 text-slate-700' : 'bg-white'" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Danh mục</label>
-                                <input type="text" x-model="form.category" placeholder="Ví dụ: Điện tử..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                                <input type="text" x-model="form.category" :readonly="isExistingProduct" placeholder="Ví dụ: Giày..." :class="isExistingProduct ? 'bg-slate-100 text-slate-700' : 'bg-white'" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Đơn giá nhập (VNĐ)</label>
-                                <input type="number" min="0" x-model.number="form.price" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Giá nhập (VNĐ)</label>
+                                <input type="number" min="0" x-model.number="form.price" placeholder="0" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                             </div>
                         </div>
 
@@ -241,11 +308,11 @@
 
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Ghi chú</label>
-                            <textarea x-model="form.note" rows="2" placeholder="Ghi chú thêm..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500"></textarea>
+                            <textarea x-model="form.note" rows="2" placeholder="Ghi chú đợt nhập..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500"></textarea>
                         </div>
 
                         <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl shadow transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-check"></i> Xác Nhận Nhập Kho
+                            <i class="fa-solid fa-check"></i> <span x-text="isExistingProduct ? 'Cộng Tồn Kho & Nhập Hàng' : 'Lưu Mới & Nhập Kho'"></span>
                         </button>
                     </form>
                 </div>
@@ -260,7 +327,7 @@
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </span>
-                            <input type="text" x-model="importSearch" placeholder="Tìm phiếu nhập, barcode, NCC..." class="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-emerald-500">
+                            <input type="text" x-model="importSearch" placeholder="Tìm SKU, barcode, NCC..." class="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-emerald-500">
                         </div>
                     </div>
                     <div class="overflow-x-auto flex-1">
@@ -268,25 +335,34 @@
                             <thead>
                                 <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
                                     <th class="py-3 px-3 font-semibold">Thời gian</th>
-                                    <th class="py-3 px-3 font-semibold">Mã Barcode</th>
+                                    <th class="py-3 px-3 font-semibold">SKU / Barcode</th>
                                     <th class="py-3 px-3 font-semibold">Sản Phẩm</th>
                                     <th class="py-3 px-3 font-semibold text-right">SL Nhập</th>
                                     <th class="py-3 px-3 font-semibold">Nhà Cung Cấp</th>
+                                    <th class="py-3 px-3 font-semibold text-center">Xóa đợt nhập</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200 text-sm">
                                 <template x-for="tx in filteredImportTransactions" :key="tx.id">
                                     <tr class="hover:bg-slate-50 transition">
                                         <td class="py-2.5 px-3 text-slate-500 text-xs" x-text="tx.date"></td>
-                                        <td class="py-2.5 px-3 font-mono text-indigo-600 text-xs" x-text="tx.barcode"></td>
+                                        <td class="py-2.5 px-3 font-mono text-xs">
+                                            <div class="font-bold text-indigo-600" x-text="tx.sku || '---'"></div>
+                                            <div class="text-[10px] text-slate-400" x-show="tx.barcode" x-text="tx.barcode"></div>
+                                        </td>
                                         <td class="py-2.5 px-3 font-medium text-slate-800" x-text="tx.name"></td>
                                         <td class="py-2.5 px-3 text-right font-bold text-emerald-600" x-text="'+' + tx.quantity + ' ' + tx.unit"></td>
                                         <td class="py-2.5 px-3 text-slate-600 text-xs" x-text="tx.partner || '---'"></td>
+                                        <td class="py-2.5 px-3 text-center">
+                                            <button @click="deleteTransaction(tx.id)" class="text-rose-500 hover:text-rose-700 text-xs p-1" title="Hủy / Xóa riêng đợt nhập sai này">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                 </template>
                                 <template x-if="filteredImportTransactions.length === 0">
                                     <tr>
-                                        <td colspan="5" class="py-8 text-center text-slate-400">Không tìm thấy phiếu nhập nào phù hợp.</td>
+                                        <td colspan="6" class="py-8 text-center text-slate-400">Không tìm thấy phiếu nhập nào phù hợp.</td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -306,7 +382,7 @@
                             <i class="fa-solid fa-truck-ramp-box text-rose-600"></i> Phiếu Xuất Kho
                         </h2>
                         <button @click="startScanner('export')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-camera"></i> Quét Barcode
+                            <i class="fa-solid fa-camera"></i> Quét Barcode/SKU
                         </button>
                     </div>
 
@@ -322,10 +398,10 @@
                                        x-model="productSearchKey" 
                                        @focus="openDropdown = true" 
                                        @click.away="openDropdown = false"
-                                       placeholder="Gõ tên hoặc mã sản phẩm để chọn..." 
+                                       placeholder="Gõ tên hoặc mã SKU/Barcode..." 
                                        class="w-full pl-9 pr-8 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500 bg-white">
                                 <template x-if="productSearchKey">
-                                    <button type="button" @click="productSearchKey = ''; form.barcode = ''; form.name = ''; form.unit = '';" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                                    <button type="button" @click="productSearchKey = ''; form.sku = ''; form.barcode = ''; form.name = ''; form.unit = '';" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
                                         <i class="fa-solid fa-xmark"></i>
                                     </button>
                                 </template>
@@ -334,12 +410,12 @@
                             <!-- Dropdown gợi ý kết quả tìm kiếm -->
                             <div x-show="openDropdown && filteredAvailableStock.length > 0" 
                                  class="absolute z-30 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto divide-y divide-slate-100" x-cloak>
-                                <template x-for="item in filteredAvailableStock" :key="item.barcode">
+                                <template x-for="item in filteredAvailableStock" :key="item.id || item.sku">
                                     <div @click="selectProductItem(item); openDropdown = false;" 
                                          class="p-2.5 hover:bg-rose-50 cursor-pointer flex justify-between items-center transition text-xs">
                                         <div>
                                             <p class="font-bold text-slate-800" x-text="item.name"></p>
-                                            <p class="text-indigo-600 font-mono text-[11px]" x-text="'Barcode: ' + item.barcode"></p>
+                                            <p class="text-indigo-600 font-mono text-[11px]" x-text="'SKU: ' + (item.sku || 'N/A') + (item.barcode ? ' | BC: ' + item.barcode : '')"></p>
                                         </div>
                                         <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded-lg" x-text="'Tồn: ' + item.stock + ' ' + item.unit"></span>
                                     </div>
@@ -347,19 +423,20 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã Barcode sản phẩm</label>
-                            <div class="flex gap-2">
-                                <input type="text" x-model="form.barcode" @input="lookupProductByBarcode()" placeholder="Nhập hoặc quét barcode..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500 font-mono">
-                                <button type="button" @click="startScanner('export')" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-sm shadow transition">
-                                    <i class="fa-solid fa-barcode"></i>
-                                </button>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã SKU</label>
+                                <input type="text" x-model="form.sku" @input="lookupProductBySkuOrBarcode()" placeholder="Nhập SKU..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500 font-mono font-bold uppercase">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã Barcode</label>
+                                <input type="text" x-model="form.barcode" @input="lookupProductBySkuOrBarcode()" placeholder="Quét/Nhập BC..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500 font-mono">
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Tên sản phẩm</label>
-                            <input type="text" x-model="form.name" placeholder="Chọn sản phẩm bằng tìm kiếm hoặc barcode..." required readonly class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm bg-slate-50 text-slate-700">
+                            <input type="text" x-model="form.name" placeholder="Chọn sản phẩm bằng tìm kiếm hoặc mã SKU..." required readonly class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm bg-slate-50 text-slate-700 font-medium">
                         </div>
 
                         <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex justify-between items-center text-xs">
@@ -379,8 +456,8 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã đơn hàng</label>
-                            <input type="text" x-model="form.partner" placeholder="Nhập..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Khách hàng / Bộ phận nhận</label>
+                            <input type="text" x-model="form.partner" placeholder="Tên khách hàng hoặc bộ phận..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500">
                         </div>
 
                         <div>
@@ -404,7 +481,7 @@
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </span>
-                            <input type="text" x-model="exportSearch" placeholder="Tìm đơn xuất, barcode, khách..." class="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-rose-500">
+                            <input type="text" x-model="exportSearch" placeholder="Tìm đơn xuất, SKU, barcode, khách..." class="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-rose-500">
                         </div>
                     </div>
                     <div class="overflow-x-auto flex-1">
@@ -412,7 +489,7 @@
                             <thead>
                                 <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
                                     <th class="py-3 px-3 font-semibold">Thời gian</th>
-                                    <th class="py-3 px-3 font-semibold">Mã Barcode</th>
+                                    <th class="py-3 px-3 font-semibold">SKU / Barcode</th>
                                     <th class="py-3 px-3 font-semibold">Sản Phẩm</th>
                                     <th class="py-3 px-3 font-semibold text-right">SL Xuất</th>
                                     <th class="py-3 px-3 font-semibold">Khách Hàng</th>
@@ -423,7 +500,10 @@
                                 <template x-for="tx in filteredExportTransactions" :key="tx.id">
                                     <tr class="hover:bg-slate-50 transition">
                                         <td class="py-2.5 px-3 text-slate-500 text-xs" x-text="tx.date"></td>
-                                        <td class="py-2.5 px-3 font-mono text-rose-600 text-xs" x-text="tx.barcode"></td>
+                                        <td class="py-2.5 px-3 font-mono text-xs">
+                                            <div class="font-bold text-rose-600" x-text="tx.sku || '---'"></div>
+                                            <div class="text-[10px] text-slate-400" x-show="tx.barcode" x-text="tx.barcode"></div>
+                                        </td>
                                         <td class="py-2.5 px-3 font-medium text-slate-800" x-text="tx.name"></td>
                                         <td class="py-2.5 px-3 text-right font-bold text-rose-600" x-text="'-' + tx.quantity + ' ' + tx.unit"></td>
                                         <td class="py-2.5 px-3 text-slate-600 text-xs" x-text="tx.partner || '---'"></td>
@@ -451,8 +531,8 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div>
-                        <h2 class="font-bold text-lg text-slate-800">Danh Mục Sản Phẩm & Barcode</h2>
-                        <p class="text-xs text-slate-500">Quản lý danh sách sản phẩm, mã vạch và thông tin gốc</p>
+                        <h2 class="font-bold text-lg text-slate-800">Danh Mục Sản Phẩm & SKU</h2>
+                        <p class="text-xs text-slate-500">Quản lý danh sách sản phẩm gốc, mã SKU và barcode</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button @click="openProductModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow">
@@ -465,31 +545,30 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                                <th class="py-3.5 px-4 font-semibold">Mã SKU</th>
                                 <th class="py-3.5 px-4 font-semibold">Mã Barcode</th>
                                 <th class="py-3.5 px-4 font-semibold">Tên Sản Phẩm</th>
                                 <th class="py-3.5 px-4 font-semibold">Danh Mục</th>
                                 <th class="py-3.5 px-4 font-semibold text-center">ĐVT</th>
                                 <th class="py-3.5 px-4 font-semibold text-right">Giá Nhập Gốc</th>
-                                <th class="py-3.5 px-4 font-semibold text-center">Thao Tác</th>
+                                <th class="py-3.5 px-4 font-semibold text-center">Thao Tác Xóa / Sửa</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200 text-sm">
                             <template x-for="p in products" :key="p.id">
                                 <tr class="hover:bg-slate-50 transition">
-                                    <td class="py-3 px-4 font-mono font-medium text-indigo-600 flex items-center gap-2">
-                                        <i class="fa-solid fa-barcode text-slate-400"></i>
-                                        <span x-text="p.barcode"></span>
-                                    </td>
+                                    <td class="py-3 px-4 font-mono font-bold text-indigo-600" x-text="p.sku || '---'"></td>
+                                    <td class="py-3 px-4 font-mono text-slate-500" x-text="p.barcode || '---'"></td>
                                     <td class="py-3 px-4 font-medium text-slate-800" x-text="p.name"></td>
                                     <td class="py-3 px-4 text-slate-600" x-text="p.category"></td>
                                     <td class="py-3 px-4 text-center text-slate-600" x-text="p.unit"></td>
                                     <td class="py-3 px-4 text-right text-slate-600" x-text="formatCurrency(p.price) + ' đ'"></td>
                                     <td class="py-3 px-4 text-center space-x-2">
-                                        <button @click="editProduct(p)" class="text-indigo-600 hover:text-indigo-800 p-1.5 rounded-lg hover:bg-indigo-50 transition" title="Sửa">
+                                        <button @click="editProduct(p)" class="text-indigo-600 hover:text-indigo-800 p-1.5 rounded-lg hover:bg-indigo-50 transition" title="Sửa thông tin">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
-                                        <button @click="deleteProduct(p.id)" class="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Xóa">
-                                            <i class="fa-solid fa-trash"></i>
+                                        <button @click="deleteProductCompletely(p)" class="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 transition font-medium" title="Xóa toàn bộ sản phẩm nhập sai này">
+                                            <i class="fa-solid fa-trash-can"></i> Xóa SP
                                         </button>
                                     </td>
                                 </tr>
@@ -521,7 +600,7 @@
                             <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
                                 <th class="py-3.5 px-4 font-semibold">Loại Phiếu</th>
                                 <th class="py-3.5 px-4 font-semibold">Thời Gian</th>
-                                <th class="py-3.5 px-4 font-semibold">Barcode</th>
+                                <th class="py-3.5 px-4 font-semibold">Mã SKU / Barcode</th>
                                 <th class="py-3.5 px-4 font-semibold">Tên Sản Phẩm</th>
                                 <th class="py-3.5 px-4 font-semibold text-right">Số Lượng</th>
                                 <th class="py-3.5 px-4 font-semibold">Đối Tác (NCC / Khách)</th>
@@ -538,13 +617,16 @@
                                               x-text="tx.type === 'IMPORT' ? '📥 NHẬP' : '📤 XUẤT'"></span>
                                     </td>
                                     <td class="py-3 px-4 text-slate-500 text-xs" x-text="tx.date"></td>
-                                    <td class="py-3 px-4 font-mono text-indigo-600" x-text="tx.barcode"></td>
+                                    <td class="py-3 px-4 font-mono text-xs">
+                                        <div class="font-bold text-indigo-600" x-text="tx.sku || '---'"></div>
+                                        <div class="text-[10px] text-slate-400" x-show="tx.barcode" x-text="tx.barcode"></div>
+                                    </td>
                                     <td class="py-3 px-4 font-medium text-slate-800" x-text="tx.name"></td>
                                     <td class="py-3 px-4 text-right font-bold" :class="tx.type === 'IMPORT' ? 'text-emerald-600' : 'text-rose-600'" x-text="(tx.type === 'IMPORT' ? '+' : '-') + tx.quantity + ' ' + tx.unit"></td>
                                     <td class="py-3 px-4 text-slate-600 text-xs" x-text="tx.partner || '---'"></td>
                                     <td class="py-3 px-4 text-slate-500 text-xs" x-text="tx.note || '---'"></td>
                                     <td class="py-3 px-4 text-center">
-                                        <button @click="deleteTransaction(tx.id)" class="text-rose-500 hover:text-rose-700 text-xs p-1" title="Xóa phiếu này">
+                                        <button @click="deleteTransaction(tx.id)" class="text-rose-500 hover:text-rose-700 text-xs p-1" title="Xóa đợt giao dịch này">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </td>
@@ -568,7 +650,7 @@
         <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl flex flex-col">
             <div class="bg-indigo-600 px-5 py-4 text-white flex justify-between items-center">
                 <h3 class="font-bold text-base flex items-center gap-2">
-                    <i class="fa-solid fa-camera"></i> Quét Mã Barcode / QR
+                    <i class="fa-solid fa-camera"></i> Quét Mã Barcode / SKU
                 </h3>
                 <button @click="stopScanner()" class="text-white hover:text-indigo-200 text-lg">
                     <i class="fa-solid fa-xmark"></i>
@@ -576,7 +658,7 @@
             </div>
             <div class="p-4 bg-slate-900 flex flex-col items-center">
                 <div id="reader" class="w-full rounded-xl overflow-hidden bg-black min-h-[250px]"></div>
-                <p class="text-slate-300 text-xs text-center mt-3">Hướng camera điện thoại về phía mã vạch sản phẩm để quét siêu nhanh.</p>
+                <p class="text-slate-300 text-xs text-center mt-3">Hướng camera điện thoại về phía mã vạch/SKU sản phẩm để quét tự động.</p>
             </div>
             <div class="p-4 bg-white border-t border-slate-200 flex justify-end">
                 <button @click="stopScanner()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl text-sm font-semibold transition">
@@ -596,13 +678,14 @@
                 </button>
             </div>
             <form @submit.prevent="saveProduct()" class="p-5 space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã Barcode</label>
-                    <div class="flex gap-2">
-                        <input type="text" x-model="productForm.barcode" required placeholder="Nhập hoặc quét barcode..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-mono focus:outline-none focus:border-indigo-500">
-                        <button type="button" @click="startScannerForProduct()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-sm shadow">
-                            <i class="fa-solid fa-camera"></i>
-                        </button>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã SKU</label>
+                        <input type="text" x-model="productForm.sku" required placeholder="Ví dụ: SP-001" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-mono font-bold text-indigo-600 uppercase focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã Barcode</label>
+                        <input type="text" x-model="productForm.barcode" placeholder="Barcode..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-mono focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
                 <div>
@@ -633,6 +716,9 @@
 
     <!-- Application Logic Script -->
     <script>
+        // CẤU HÌNH LINK GOOGLE APPS SCRIPT WEB APP
+        const API_URL = "https://script.google.com/macros/s/AKfycbzrLoPnx9130LJPwdu0cyFJi4u8YAFrNSXLd-4aAE1CEdPNTr7pQFjl67fY139AU5V6/exec";
+
         function inventoryApp() {
             return {
                 activeTab: 'dashboard',
@@ -640,30 +726,34 @@
                 importSearch: '',
                 exportSearch: '',
                 productSearchKey: '',
+                importSearchKey: '',
                 scannerModal: false,
                 scannerContext: 'import',
                 html5QrCode: null,
 
                 productModal: false,
                 isEditingProduct: false,
+                isExistingProduct: false,
+                isLoading: false,
 
-                // Default Sample Data
+                // Default Sample Data with SKU
                 products: [
-                    { id: '1', barcode: '8934602001111', name: 'Nước ngọt Coca Cola lon 330ml', category: 'Đồ uống', unit: 'Lon', price: 9500 },
-                    { id: '2', barcode: '8934602002222', name: 'Bánh quy Orion ChocoPie hộp 12', category: 'Bánh kẹo', unit: 'Hộp', price: 48000 },
-                    { id: '3', barcode: '8934602003333', name: 'Mì gói Hảo Hảo chua cay thùng 30', category: 'Thực phẩm khô', unit: 'Thùng', price: 115000 },
-                    { id: '4', barcode: '8934602004444', name: 'Dầu gội Clear Men 650ml', category: 'Hóa mỹ phẩm', unit: 'Chai', price: 142000 }
+                    { id: '1', sku: 'COCA-330', barcode: '8934602001111', name: 'Nước ngọt Coca Cola lon 330ml', category: 'Đồ uống', unit: 'Lon', price: 9500 },
+                    { id: '2', sku: 'CHOCO-12', barcode: '8934602002222', name: 'Bánh quy Orion ChocoPie hộp 12', category: 'Bánh kẹo', unit: 'Hộp', price: 48000 },
+                    { id: '3', sku: 'HAOHAO-30', barcode: '8934602003333', name: 'Mì gói Hảo Hảo chua cay thùng 30', category: 'Thực phẩm khô', unit: 'Thùng', price: 115000 },
+                    { id: '4', sku: 'CLEAR-650', barcode: '8934602004444', name: 'Dầu gội Clear Men 650ml', category: 'Hóa mỹ phẩm', unit: 'Chai', price: 142000 }
                 ],
 
                 transactions: [
-                    { id: 't1', type: 'IMPORT', date: '2026-06-01 08:30', barcode: '8934602001111', name: 'Nước ngọt Coca Cola lon 330ml', quantity: 100, unit: 'Lon', price: 9500, partner: 'Công ty Coca Cola VN', note: 'Nhập kho đầu tháng' },
-                    { id: 't2', type: 'IMPORT', date: '2026-06-01 09:15', barcode: '8934602002222', name: 'Bánh quy Orion ChocoPie hộp 12', quantity: 50, unit: 'Hộp', price: 48000, partner: 'Nhà phân phối Orion', note: 'Nhập hàng mới' },
-                    { id: 't3', type: 'EXPORT', date: '2026-06-02 14:00', barcode: '8934602001111', name: 'Nước ngọt Coca Cola lon 330ml', quantity: 20, unit: 'Lon', partner: 'Cửa hàng tạp hóa A', note: 'Xuất bán lẻ' },
-                    { id: 't4', type: 'IMPORT', date: '2026-06-03 10:00', barcode: '8934602003333', name: 'Mì gói Hảo Hảo chua cay thùng 30', quantity: 30, unit: 'Thùng', price: 115000, partner: 'Acecook Việt Nam', note: 'Nhập kho' },
-                    { id: 't5', type: 'EXPORT', date: '2026-06-04 16:30', barcode: '8934602002222', name: 'Bánh quy Orion ChocoPie hộp 12', quantity: 12, unit: 'Hộp', partner: 'Siêu thị mini B', note: 'Xuất sỉ' }
+                    { id: 't1', type: 'IMPORT', date: '2026-06-01 08:30', sku: 'COCA-330', barcode: '8934602001111', name: 'Nước ngọt Coca Cola lon 330ml', quantity: 100, unit: 'Lon', price: 9500, partner: 'Công ty Coca Cola VN', note: 'Nhập kho đầu tháng' },
+                    { id: 't2', type: 'IMPORT', date: '2026-06-01 09:15', sku: 'CHOCO-12', barcode: '8934602002222', name: 'Bánh quy Orion ChocoPie hộp 12', quantity: 50, unit: 'Hộp', price: 48000, partner: 'Nhà phân phối Orion', note: 'Nhập hàng mới' },
+                    { id: 't3', type: 'EXPORT', date: '2026-06-02 14:00', sku: 'COCA-330', barcode: '8934602001111', name: 'Nước ngọt Coca Cola lon 330ml', quantity: 20, unit: 'Lon', partner: 'Cửa hàng tạp hóa A', note: 'Xuất bán lẻ' },
+                    { id: 't4', type: 'IMPORT', date: '2026-06-03 10:00', sku: 'HAOHAO-30', barcode: '8934602003333', name: 'Mì gói Hảo Hảo chua cay thùng 30', quantity: 30, unit: 'Thùng', price: 115000, partner: 'Acecook Việt Nam', note: 'Nhập kho' },
+                    { id: 't5', type: 'EXPORT', date: '2026-06-04 16:30', sku: 'CHOCO-12', barcode: '8934602002222', name: 'Bánh quy Orion ChocoPie hộp 12', quantity: 12, unit: 'Hộp', partner: 'Siêu thị mini B', note: 'Xuất sỉ' }
                 ],
 
                 form: {
+                    sku: '',
                     barcode: '',
                     name: '',
                     quantity: 1,
@@ -676,6 +766,7 @@
 
                 productForm: {
                     id: '',
+                    sku: '',
                     barcode: '',
                     name: '',
                     category: '',
@@ -689,11 +780,50 @@
                     type: 'success'
                 },
 
-                init() {
+                async init() {
                     const savedProducts = localStorage.getItem('inv_products');
                     const savedTransactions = localStorage.getItem('inv_transactions');
                     if (savedProducts) this.products = JSON.parse(savedProducts);
                     if (savedTransactions) this.transactions = JSON.parse(savedTransactions);
+
+                    // Tự động đồng bộ từ Google Sheets nếu đã cài API_URL
+                    if (API_URL && API_URL.startsWith('http')) {
+                        await this.loadFromGoogleSheets();
+                    }
+                },
+
+                async loadFromGoogleSheets() {
+                    try {
+                        this.showNotification('Đang đồng bộ dữ liệu từ Google Sheets...', 'info');
+                        const res = await fetch(API_URL);
+                        const data = await res.json();
+                        if (data.status === 'success') {
+                            if (data.products && data.products.length > 0) {
+                                this.products = data.products.map((p, idx) => ({ ...p, id: String(idx + 1) }));
+                            }
+                            if (data.transactions && data.transactions.length > 0) {
+                                this.transactions = data.transactions;
+                            }
+                            this.saveToLocalStorage();
+                            this.showNotification('Đồng bộ dữ liệu thành công từ Google Sheets!', 'success');
+                        }
+                    } catch (err) {
+                        console.error('Lỗi đồng bộ Google Sheets:', err);
+                    }
+                },
+
+                async syncToGoogleSheets(payload) {
+                    if (!API_URL || !API_URL.startsWith('http')) return;
+                    try {
+                        await fetch(API_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                    } catch (err) {
+                        console.error('Lỗi gửi tới Google Sheets:', err);
+                    }
                 },
 
                 saveToLocalStorage() {
@@ -710,10 +840,10 @@
                     }, 3000);
                 },
 
-                // Stock calculations linked tightly with transactions
+                // Stock calculations linked strictly with SKU/Barcode
                 get stockList() {
                     return this.products.map(p => {
-                        const pTransactions = this.transactions.filter(t => t.barcode === p.barcode);
+                        const pTransactions = this.transactions.filter(t => (p.sku && t.sku === p.sku) || (p.barcode && t.barcode === p.barcode));
                         const totalImport = pTransactions.filter(t => t.type === 'IMPORT').reduce((sum, t) => sum + t.quantity, 0);
                         const totalExport = pTransactions.filter(t => t.type === 'EXPORT').reduce((sum, t) => sum + t.quantity, 0);
                         const stock = totalImport - totalExport;
@@ -729,14 +859,33 @@
                 get filteredStock() {
                     if (!this.stockSearch) return this.stockList;
                     const q = this.stockSearch.toLowerCase();
-                    return this.stockList.filter(item => item.name.toLowerCase().includes(q) || item.barcode.toLowerCase().includes(q) || item.category.toLowerCase().includes(q));
+                    return this.stockList.filter(item => 
+                        item.name.toLowerCase().includes(q) || 
+                        (item.sku && item.sku.toLowerCase().includes(q)) || 
+                        (item.barcode && item.barcode.toLowerCase().includes(q)) || 
+                        (item.category && item.category.toLowerCase().includes(q))
+                    );
+                },
+
+                get filteredImportProducts() {
+                    if (!this.importSearchKey) return this.stockList;
+                    const q = this.importSearchKey.toLowerCase();
+                    return this.stockList.filter(item => 
+                        item.name.toLowerCase().includes(q) || 
+                        (item.sku && item.sku.toLowerCase().includes(q)) || 
+                        (item.barcode && item.barcode.toLowerCase().includes(q))
+                    );
                 },
 
                 get filteredAvailableStock() {
                     const available = this.stockList.filter(s => s.stock > 0);
                     if (!this.productSearchKey) return available;
                     const q = this.productSearchKey.toLowerCase();
-                    return available.filter(item => item.name.toLowerCase().includes(q) || item.barcode.toLowerCase().includes(q));
+                    return available.filter(item => 
+                        item.name.toLowerCase().includes(q) || 
+                        (item.sku && item.sku.toLowerCase().includes(q)) || 
+                        (item.barcode && item.barcode.toLowerCase().includes(q))
+                    );
                 },
 
                 get totalStockCount() {
@@ -754,7 +903,12 @@
                 get filteredImportTransactions() {
                     if (!this.importSearch) return this.importTransactions;
                     const q = this.importSearch.toLowerCase();
-                    return this.importTransactions.filter(t => t.name.toLowerCase().includes(q) || t.barcode.toLowerCase().includes(q) || (t.partner && t.partner.toLowerCase().includes(q)));
+                    return this.importTransactions.filter(t => 
+                        t.name.toLowerCase().includes(q) || 
+                        (t.sku && t.sku.toLowerCase().includes(q)) || 
+                        (t.barcode && t.barcode.toLowerCase().includes(q)) || 
+                        (t.partner && t.partner.toLowerCase().includes(q))
+                    );
                 },
 
                 get exportTransactions() {
@@ -764,50 +918,131 @@
                 get filteredExportTransactions() {
                     if (!this.exportSearch) return this.exportTransactions;
                     const q = this.exportSearch.toLowerCase();
-                    return this.exportTransactions.filter(t => t.name.toLowerCase().includes(q) || t.barcode.toLowerCase().includes(q) || (t.partner && t.partner.toLowerCase().includes(q)));
+                    return this.exportTransactions.filter(t => 
+                        t.name.toLowerCase().includes(q) || 
+                        (t.sku && t.sku.toLowerCase().includes(q)) || 
+                        (t.barcode && t.barcode.toLowerCase().includes(q)) || 
+                        (t.partner && t.partner.toLowerCase().includes(q))
+                    );
                 },
 
                 get currentAvailableStock() {
-                    if (!this.form.barcode) return 0;
-                    const found = this.stockList.find(s => s.barcode === this.form.barcode);
+                    if (!this.form.sku && !this.form.barcode) return 0;
+                    const found = this.stockList.find(s => (this.form.sku && s.sku === this.form.sku) || (this.form.barcode && s.barcode === this.form.barcode));
                     return found ? found.stock : 0;
                 },
 
-                lookupProductByBarcode() {
-                    const bc = this.form.barcode.trim();
-                    if (!bc) return;
-                    const foundProd = this.products.find(p => p.barcode === bc);
-                    if (foundProd) {
-                        this.form.name = foundProd.name;
-                        this.form.unit = foundProd.unit;
-                        this.form.category = foundProd.category;
-                        if (this.activeTab === 'import') {
-                            this.form.price = foundProd.price;
-                        }
-                    } else {
-                        if (this.activeTab === 'export') {
-                            this.showNotification('Mã barcode này không tồn tại trong hệ thống hoặc chưa được nhập kho!', 'error');
-                        }
-                    }
-                },
+                // Core logic: Smart autofill for SKU & Barcode
+                lookupProductBySkuOrBarcode() {
+                    const skuVal = (this.form.sku || '').trim().toUpperCase();
+                    const bcVal = (this.form.barcode || '').trim();
 
-                selectProductItem(item) {
-                    this.form.barcode = item.barcode;
-                    this.form.name = item.name;
-                    this.form.unit = item.unit;
-                    this.productSearchKey = item.name + ' (' + item.barcode + ')';
-                },
-
-                submitTransaction(type) {
-                    if (!this.form.barcode || !this.form.name || this.form.quantity <= 0) {
-                        this.showNotification('Vui lòng điền đầy đủ thông tin hợp lệ!', 'error');
+                    if (!skuVal && !bcVal) {
+                        this.isExistingProduct = false;
                         return;
                     }
 
+                    const foundProd = this.products.find(p => 
+                        (skuVal && p.sku && p.sku.toUpperCase() === skuVal) || 
+                        (bcVal && p.barcode && p.barcode === bcVal)
+                    );
+
+                    if (foundProd) {
+                        this.isExistingProduct = true;
+                        this.form.sku = foundProd.sku || skuVal;
+                        this.form.barcode = foundProd.barcode || bcVal;
+                        this.form.name = foundProd.name;
+                        this.form.unit = foundProd.unit;
+                        this.form.category = foundProd.category;
+                        this.form.price = foundProd.price;
+                        this.importSearchKey = foundProd.name + ' (' + foundProd.sku + ')';
+                    } else {
+                        this.isExistingProduct = false;
+                        if (this.activeTab === 'export') {
+                            this.showNotification('Mã SKU/Barcode này không tồn tại trong hệ thống!', 'error');
+                        }
+                    }
+                },
+
+                selectProductForImport(item) {
+                    this.isExistingProduct = true;
+                    this.form.sku = item.sku;
+                    this.form.barcode = item.barcode || '';
+                    this.form.name = item.name;
+                    this.form.unit = item.unit;
+                    this.form.category = item.category;
+                    this.form.price = item.price;
+                    this.importSearchKey = item.name + ' (' + item.sku + ')';
+                },
+
+                selectProductItem(item) {
+                    this.form.sku = item.sku;
+                    this.form.barcode = item.barcode || '';
+                    this.form.name = item.name;
+                    this.form.unit = item.unit;
+                    this.productSearchKey = item.name + ' (' + item.sku + ')';
+                },
+
+                resetImportForm() {
+                    this.importSearchKey = '';
+                    this.form.sku = '';
+                    this.form.barcode = '';
+                    this.form.name = '';
+                    this.form.unit = 'Cái';
+                    this.form.category = '';
+                    this.form.price = 0;
+                    this.isExistingProduct = false;
+                },
+
+                deleteProductCompletely(p) {
+                    if (confirm(`XÁC NHẬN XÓA SẢN PHẨM NHẬP SAI:
+
+Bạn có chắc chắn muốn XÓA HOÀN TOÀN sản phẩm "${p.name}" (SKU: ${p.sku})?
+
+Thao tác này sẽ xóa sản phẩm khỏi Danh Mục và xóa toàn bộ Lịch Sử Nhập/Xuất liên quan.`)) {
+                        const targetSku = p.sku;
+                        const targetBarcode = p.barcode;
+
+                        // 1. Xóa khỏi danh mục sản phẩm
+                        this.products = this.products.filter(prod => prod.id !== p.id && prod.sku !== targetSku);
+
+                        // 2. Xóa tất cả các giao dịch nhập/xuất liên quan
+                        this.transactions = this.transactions.filter(t => 
+                            !(targetSku && t.sku === targetSku) && 
+                            !(targetBarcode && t.barcode === targetBarcode)
+                        );
+
+                        this.saveToLocalStorage();
+                        this.syncToGoogleSheets({ action: 'DELETE_PRODUCT', sku: targetSku, name: p.name });
+                        this.resetImportForm();
+                        this.showNotification(`Đã xóa hoàn toàn sản phẩm "${p.name}" nhập sai khỏi hệ thống!`, 'success');
+                    }
+                },
+
+                deleteProductCompletelyCurrentForm() {
+                    const skuUpper = (this.form.sku || '').trim().toUpperCase();
+                    const bcVal = (this.form.barcode || '').trim();
+                    const foundProd = this.products.find(p => (skuUpper && p.sku && p.sku.toUpperCase() === skuUpper) || (bcVal && p.barcode && p.barcode === bcVal));
+                    if (foundProd) {
+                        this.deleteProductCompletely(foundProd);
+                    } else {
+                        this.resetImportForm();
+                        this.showNotification('Đã xoá thông tin trên form.', 'success');
+                    }
+                },
+
+                async submitTransaction(type) {
+                    if ((!this.form.sku && !this.form.barcode) || !this.form.name || this.form.quantity <= 0) {
+                        this.showNotification('Vui lòng điền mã SKU hoặc Barcode, tên và số lượng hợp lệ!', 'error');
+                        return;
+                    }
+
+                    const skuUpper = (this.form.sku || '').trim().toUpperCase();
+
                     if (type === 'EXPORT') {
-                        const existingProd = this.products.find(p => p.barcode === this.form.barcode);
+                        const existingProd = this.products.find(p => (skuUpper && p.sku && p.sku.toUpperCase() === skuUpper) || (this.form.barcode && p.barcode === this.form.barcode));
                         if (!existingProd) {
-                            this.showNotification('Sản phẩm này chưa tồn tại trong danh mục hệ thống!', 'error');
+                            this.showNotification('Sản phẩm này chưa từng được nhập vào hệ thống!', 'error');
                             return;
                         }
                         if (this.form.quantity > this.currentAvailableStock) {
@@ -816,16 +1051,22 @@
                         }
                     }
 
-                    let existingProd = this.products.find(p => p.barcode === this.form.barcode);
+                    // Tự động lưu sản phẩm mới vào danh mục chỉ 1 lần nếu chưa có
+                    let existingProd = this.products.find(p => (skuUpper && p.sku && p.sku.toUpperCase() === skuUpper) || (this.form.barcode && p.barcode === this.form.barcode));
                     if (!existingProd) {
-                        this.products.push({
+                        existingProd = {
                             id: Date.now().toString(),
+                            sku: skuUpper || ('SKU-' + Date.now().toString().slice(-6)),
                             barcode: this.form.barcode,
                             name: this.form.name,
                             category: this.form.category || 'Chung',
                             unit: this.form.unit || 'Cái',
                             price: this.form.price || 0
-                        });
+                        };
+                        this.products.push(existingProd);
+                    } else if (this.form.price > 0) {
+                        // Cập nhật lại giá nhập mới nhất
+                        existingProd.price = this.form.price;
                     }
 
                     const now = new Date();
@@ -834,7 +1075,8 @@
                         id: 't_' + Date.now(),
                         type: type,
                         date: dateStr,
-                        barcode: this.form.barcode,
+                        sku: skuUpper || existingProd.sku,
+                        barcode: this.form.barcode || existingProd.barcode,
                         name: this.form.name,
                         quantity: this.form.quantity,
                         unit: this.form.unit,
@@ -846,10 +1088,24 @@
                     this.transactions.unshift(newTx);
                     this.saveToLocalStorage();
 
-                    this.showNotification(type === 'IMPORT' ? 'Nhập kho thành công!' : 'Xuất kho thành công!', 'success');
+                    // Đồng bộ tức thời lên Google Sheets
+                    this.syncToGoogleSheets({
+                        action: 'SAVE_TRANSACTION',
+                        type: type,
+                        sku: skuUpper || existingProd.sku,
+                        barcode: this.form.barcode || existingProd.barcode,
+                        name: this.form.name,
+                        quantity: this.form.quantity,
+                        unit: this.form.unit,
+                        category: this.form.category,
+                        price: this.form.price || 0,
+                        partner: this.form.partner,
+                        note: this.form.note
+                    });
 
-                    this.form.barcode = '';
-                    this.form.name = '';
+                    this.showNotification(type === 'IMPORT' ? 'Nhập kho & cộng tồn kho thành công!' : 'Xuất kho thành công!', 'success');
+
+                    this.resetImportForm();
                     this.form.quantity = 1;
                     this.form.partner = '';
                     this.form.note = '';
@@ -857,16 +1113,16 @@
                 },
 
                 deleteTransaction(id) {
-                    if (confirm('Bạn có chắc chắn muốn xóa/hủy phiếu giao dịch này? (Tồn kho sẽ được tự động tính lại).')) {
+                    if (confirm('Bạn có chắc chắn muốn xóa/hủy đợt giao dịch này? (Tồn kho sẽ được tự động tính lại).')) {
                         this.transactions = this.transactions.filter(t => t.id !== id);
                         this.saveToLocalStorage();
-                        this.showNotification('Đã xóa phiếu giao dịch.', 'success');
+                        this.showNotification('Đã xóa đợt giao dịch.', 'success');
                     }
                 },
 
                 openProductModal() {
                     this.isEditingProduct = false;
-                    this.productForm = { id: '', barcode: '', name: '', category: '', unit: 'Cái', price: 0 };
+                    this.productForm = { id: '', sku: '', barcode: '', name: '', category: '', unit: 'Cái', price: 0 };
                     this.productModal = true;
                 },
 
@@ -877,21 +1133,24 @@
                 },
 
                 saveProduct() {
-                    if (!this.productForm.barcode || !this.productForm.name) {
-                        this.showNotification('Vui lòng nhập mã barcode và tên sản phẩm!', 'error');
+                    const skuUpper = (this.productForm.sku || '').trim().toUpperCase();
+                    if (!skuUpper || !this.productForm.name) {
+                        this.showNotification('Vui lòng nhập đầy đủ Mã SKU và Tên sản phẩm!', 'error');
                         return;
                     }
+
+                    this.productForm.sku = skuUpper;
 
                     if (this.isEditingProduct) {
                         const idx = this.products.findIndex(p => p.id === this.productForm.id);
                         if (idx !== -1) {
                             this.products[idx] = { ...this.productForm };
                         }
-                        this.showNotification('Cập nhật sản phẩm thành công!', 'success');
+                        this.showNotification('Cập nhật thông tin sản phẩm thành công!', 'success');
                     } else {
-                        const exists = this.products.some(p => p.barcode === this.productForm.barcode);
+                        const exists = this.products.some(p => p.sku && p.sku.toUpperCase() === skuUpper);
                         if (exists) {
-                            this.showNotification('Mã barcode này đã tồn tại trong hệ thống!', 'error');
+                            this.showNotification('Mã SKU này đã tồn tại trong danh mục!', 'error');
                             return;
                         }
                         this.products.push({
@@ -905,14 +1164,6 @@
                     this.productModal = false;
                 },
 
-                deleteProduct(id) {
-                    if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-                        this.products = this.products.filter(p => p.id !== id);
-                        this.saveToLocalStorage();
-                        this.showNotification('Đã xóa sản phẩm.', 'success');
-                    }
-                },
-
                 resetAllData() {
                     if (confirm('Khôi phục dữ liệu mẫu sẽ làm mới toàn bộ danh sách sản phẩm và lịch sử giao dịch. Tiếp tục?')) {
                         localStorage.removeItem('inv_products');
@@ -921,7 +1172,7 @@
                     }
                 },
 
-                // Export to Word document format following Hi Sports template (CÔNG TY TNHH QUANG CHÂU TRADING - HI SPORTS)
+                // Export to Word document format following Hi Sports template
                 exportWordDocx() {
                     const todayStr = new Date().toLocaleDateString('vi-VN');
                     let tableRows = '';
@@ -929,7 +1180,8 @@
                         tableRows += `
                             <tr>
                                 <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${index + 1}</td>
-                                <td style="border: 1px solid #cbd5e1; padding: 8px; font-family: monospace; color: #1e3a8a;">${item.barcode}</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; font-family: monospace; font-weight: bold; color: #1e3a8a;">${item.sku || '---'}</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; font-family: monospace; text-align: center;">${item.barcode || '---'}</td>
                                 <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">${item.name}</td>
                                 <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${item.unit}</td>
                                 <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right; color: #047857;">${item.totalImport}</td>
@@ -1046,7 +1298,8 @@
                                     <thead>
                                         <tr>
                                             <th>STT</th>
-                                            <th>Mã Barcode</th>
+                                            <th>SKU</th>
+                                            <th>Barcode</th>
                                             <th>Tên Sản Phẩm</th>
                                             <th>ĐVT</th>
                                             <th>Tổng Nhập</th>
@@ -1112,31 +1365,6 @@
                     }, 300);
                 },
 
-                startScannerForProduct() {
-                    this.scannerContext = 'product';
-                    this.scannerModal = true;
-                    setTimeout(() => {
-                        if (this.html5QrCode) {
-                            try { this.html5QrCode.stop(); } catch(e){}
-                        }
-                        this.html5QrCode = new Html5Qrcode("reader");
-                        const config = { fps: 15, qrbox: { width: 250, height: 150 } };
-                        this.html5QrCode.start(
-                            { facingMode: "environment" },
-                            config,
-                            (decodedText, decodedResult) => {
-                                this.playBeep();
-                                this.productForm.barcode = decodedText;
-                                this.stopScanner();
-                                this.showNotification('Quét barcode thành công: ' + decodedText, 'success');
-                            },
-                            (err) => {}
-                        ).catch((err) => {
-                            this.showNotification('Không thể mở camera thiết bị.', 'error');
-                        });
-                    }, 300);
-                },
-
                 stopScanner() {
                     if (this.html5QrCode) {
                         this.html5QrCode.stop().catch(() => {}).finally(() => {
@@ -1150,7 +1378,7 @@
                 onScanSuccess(decodedText) {
                     this.stopScanner();
                     this.form.barcode = decodedText;
-                    this.lookupProductByBarcode();
+                    this.lookupProductBySkuOrBarcode();
                     this.showNotification('Quét mã thành công: ' + decodedText, 'success');
                 },
 

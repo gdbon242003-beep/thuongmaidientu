@@ -54,9 +54,7 @@
                 <button @click="activeTab = 'export'" :class="activeTab === 'export' ? 'bg-white text-indigo-600 shadow' : 'text-white hover:bg-indigo-600'" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-truck-ramp-box"></i> Xuất Kho
                 </button>
-                <button @click="activeTab = 'products'" :class="activeTab === 'products' ? 'bg-white text-indigo-600 shadow' : 'text-white hover:bg-indigo-600'" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-box"></i> Sản Phẩm
-                </button>
+                
                 <button @click="activeTab = 'history'" :class="activeTab === 'history' ? 'bg-white text-indigo-600 shadow' : 'text-white hover:bg-indigo-600'" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử
                 </button>
@@ -241,19 +239,30 @@
                         </div>
                     </div>
 
-                    <!-- Thẻ Thông Báo Tự Động Nhận Diện -->
+                    <!-- Thẻ Thông Báo Tự Động Nhận Diện & Cảnh Báo Sắp Hết Hàng -->
                     <template x-if="isExistingProduct">
-                        <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-xs flex items-center justify-between gap-2">
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-                                <div>
-                                    <p class="font-bold">Sản phẩm đã có trong hệ thống!</p>
-                                    <p class="text-[11px] text-emerald-700">Thông tin tên, ĐVT, giá đã tự động điền. Bạn chỉ cần nhập số lượng thêm.</p>
+                        <div class="space-y-2 mb-4">
+                            <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-xs flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                                    <div>
+                                        <p class="font-bold">Sản phẩm đã có trong hệ thống!</p>
+                                        <p class="text-[11px] text-emerald-700">Thông tin tên, ĐVT, giá đã tự động điền. Tồn kho hiện tại: <span class="font-bold" x-text="currentImportStock"></span></p>
+                                    </div>
                                 </div>
+                                <button @click="deleteProductCompletelyCurrentForm()" type="button" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-semibold text-[11px] whitespace-nowrap transition">
+                                    <i class="fa-solid fa-trash-can"></i> Xóa SP
+                                </button>
                             </div>
-                            <button @click="deleteProductCompletelyCurrentForm()" type="button" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-semibold text-[11px] whitespace-nowrap transition">
-                                <i class="fa-solid fa-trash-can"></i> Xóa SP Nhập Sai
-                            </button>
+                            <template x-if="currentImportStock < 5">
+                                <div class="bg-amber-50 border border-amber-300 text-amber-900 p-3 rounded-xl text-xs flex items-center gap-2 shadow-sm animate-pulse">
+                                    <i class="fa-solid fa-triangle-exclamation text-amber-600 text-base"></i>
+                                    <div>
+                                        <p class="font-bold">Cảnh báo: Sản phẩm sắp hết hàng!</p>
+                                        <p class="text-[11px]">Tồn kho chỉ còn <span class="font-bold" x-text="currentImportStock"></span>. Cần nhập thêm ngay lập tức!</p>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </template>
 
@@ -527,59 +536,6 @@
         </div>
 
         <!-- ================= TAB 4: PRODUCTS ================= -->
-        <div x-show="activeTab === 'products'" x-cloak>
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div>
-                        <h2 class="font-bold text-lg text-slate-800">Danh Mục Sản Phẩm & SKU</h2>
-                        <p class="text-xs text-slate-500">Quản lý danh sách sản phẩm gốc, mã SKU và barcode</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button @click="openProductModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow">
-                            <i class="fa-solid fa-plus"></i> Thêm Sản Phẩm Mới
-                        </button>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
-                                <th class="py-3.5 px-4 font-semibold">Mã SKU</th>
-                                <th class="py-3.5 px-4 font-semibold">Mã Barcode</th>
-                                <th class="py-3.5 px-4 font-semibold">Tên Sản Phẩm</th>
-                                <th class="py-3.5 px-4 font-semibold">Danh Mục</th>
-                                <th class="py-3.5 px-4 font-semibold text-center">ĐVT</th>
-                                <th class="py-3.5 px-4 font-semibold text-right">Giá Nhập Gốc</th>
-                                <th class="py-3.5 px-4 font-semibold text-center">Thao Tác Xóa / Sửa</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-200 text-sm">
-                            <template x-for="p in products" :key="p.id">
-                                <tr class="hover:bg-slate-50 transition">
-                                    <td class="py-3 px-4 font-mono font-bold text-indigo-600" x-text="p.sku || '---'"></td>
-                                    <td class="py-3 px-4 font-mono text-slate-500" x-text="p.barcode || '---'"></td>
-                                    <td class="py-3 px-4 font-medium text-slate-800" x-text="p.name"></td>
-                                    <td class="py-3 px-4 text-slate-600" x-text="p.category"></td>
-                                    <td class="py-3 px-4 text-center text-slate-600" x-text="p.unit"></td>
-                                    <td class="py-3 px-4 text-right text-slate-600" x-text="formatCurrency(p.price) + ' đ'"></td>
-                                    <td class="py-3 px-4 text-center space-x-2">
-                                        <button @click="editProduct(p)" class="text-indigo-600 hover:text-indigo-800 p-1.5 rounded-lg hover:bg-indigo-50 transition" title="Sửa thông tin">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
-                                        <button @click="deleteProductCompletely(p)" class="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 transition font-medium" title="Xóa toàn bộ sản phẩm nhập sai này">
-                                            <i class="fa-solid fa-trash-can"></i> Xóa SP
-                                        </button>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= TAB 5: HISTORY ================= -->
         <div x-show="activeTab === 'history'" x-cloak>
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -668,56 +624,12 @@
         </div>
     </div>
 
-    <!-- ================= PRODUCT MODAL ================= -->
-    <div x-show="productModal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" x-cloak>
-        <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
-            <div class="bg-indigo-600 px-5 py-4 text-white flex justify-between items-center">
-                <h3 class="font-bold text-base" x-text="isEditingProduct ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'"></h3>
-                <button @click="productModal = false" class="text-white hover:text-indigo-200 text-lg">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <form @submit.prevent="saveProduct()" class="p-5 space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã SKU</label>
-                        <input type="text" x-model="productForm.sku" required placeholder="Ví dụ: SP-001" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-mono font-bold text-indigo-600 uppercase focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã Barcode</label>
-                        <input type="text" x-model="productForm.barcode" placeholder="Barcode..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-mono focus:outline-none focus:border-indigo-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Tên sản phẩm</label>
-                    <input type="text" x-model="productForm.name" required placeholder="Tên sản phẩm..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Danh mục</label>
-                        <input type="text" x-model="productForm.category" placeholder="Danh mục..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Đơn vị tính</label>
-                        <input type="text" x-model="productForm.unit" required placeholder="Cái, Hộp..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Giá nhập gốc (VNĐ)</label>
-                    <input type="number" min="0" x-model.number="productForm.price" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
-                </div>
-                <div class="flex justify-end gap-3 pt-3 border-t border-slate-200">
-                    <button type="button" @click="productModal = false" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl text-sm font-semibold transition">Hủy</button>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition">Lưu Lại</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    
 
     <!-- Application Logic Script -->
     <script>
         // CẤU HÌNH LINK GOOGLE APPS SCRIPT WEB APP
-        const API_URL = "https://script.google.com/macros/s/AKfycbzrLoPnx9130LJPwdu0cyFJi4u8YAFrNSXLd-4aAE1CEdPNTr7pQFjl67fY139AU5V6/exec";
+        const API_URL = "https://script.google.com/macros/library/d/1WZQMVMNrqy--DN2-bw4x3Ie0ZKZiLQ8mnOAxZFYPutdgZKjE_LjpoJBo/6";
 
         function inventoryApp() {
             return {
@@ -771,7 +683,8 @@
                     name: '',
                     category: '',
                     unit: 'Cái',
-                    price: 0
+                    price: 0,
+                    quantity: 0
                 },
 
                 notification: {
@@ -843,7 +756,13 @@
                 // Stock calculations linked strictly with SKU/Barcode
                 get stockList() {
                     return this.products.map(p => {
-                        const pTransactions = this.transactions.filter(t => (p.sku && t.sku === p.sku) || (p.barcode && t.barcode === p.barcode));
+                        const pSku = (p.sku || '').trim().toUpperCase();
+                        const pBc = (p.barcode || '').trim();
+                        const pTransactions = this.transactions.filter(t => {
+                            const tSku = (t.sku || '').trim().toUpperCase();
+                            const tBc = (t.barcode || '').trim();
+                            return (pSku && tSku && pSku === tSku) || (pBc && tBc && pBc === tBc);
+                        });
                         const totalImport = pTransactions.filter(t => t.type === 'IMPORT').reduce((sum, t) => sum + t.quantity, 0);
                         const totalExport = pTransactions.filter(t => t.type === 'EXPORT').reduce((sum, t) => sum + t.quantity, 0);
                         const stock = totalImport - totalExport;
@@ -932,6 +851,18 @@
                     return found ? found.stock : 0;
                 },
 
+                get currentImportStock() {
+                    if (!this.form.sku && !this.form.barcode) return 0;
+                    const skuVal = (this.form.sku || '').trim().toUpperCase();
+                    const bcVal = (this.form.barcode || '').trim();
+                    const found = this.stockList.find(s => {
+                        const sSku = (s.sku || '').trim().toUpperCase();
+                        const sBc = (s.barcode || '').trim();
+                        return (skuVal && sSku && skuVal === sSku) || (bcVal && sBc && bcVal === sBc);
+                    });
+                    return found ? found.stock : 0;
+                },
+
                 // Core logic: Smart autofill for SKU & Barcode
                 lookupProductBySkuOrBarcode() {
                     const skuVal = (this.form.sku || '').trim().toUpperCase();
@@ -942,10 +873,11 @@
                         return;
                     }
 
-                    const foundProd = this.products.find(p => 
-                        (skuVal && p.sku && p.sku.toUpperCase() === skuVal) || 
-                        (bcVal && p.barcode && p.barcode === bcVal)
-                    );
+                    const foundProd = this.products.find(p => {
+                        const pSku = (p.sku || '').trim().toUpperCase();
+                        const pBc = (p.barcode || '').trim();
+                        return (skuVal && pSku && pSku === skuVal) || (bcVal && pBc && pBc === bcVal);
+                    });
 
                     if (foundProd) {
                         this.isExistingProduct = true;
@@ -1122,7 +1054,7 @@ Thao tác này sẽ xóa sản phẩm khỏi Danh Mục và xóa toàn bộ Lị
 
                 openProductModal() {
                     this.isEditingProduct = false;
-                    this.productForm = { id: '', sku: '', barcode: '', name: '', category: '', unit: 'Cái', price: 0 };
+                    this.productForm = { id: '', sku: '', barcode: '', name: '', category: '', unit: 'Cái', price: 0, quantity: 1 };
                     this.productModal = true;
                 },
 
@@ -1153,11 +1085,54 @@ Thao tác này sẽ xóa sản phẩm khỏi Danh Mục và xóa toàn bộ Lị
                             this.showNotification('Mã SKU này đã tồn tại trong danh mục!', 'error');
                             return;
                         }
-                        this.products.push({
-                            ...this.productForm,
-                            id: Date.now().toString()
-                        });
-                        this.showNotification('Thêm sản phẩm mới thành công!', 'success');
+                        const newProd = {
+                            id: Date.now().toString(),
+                            sku: this.productForm.sku,
+                            barcode: this.productForm.barcode || '',
+                            name: this.productForm.name,
+                            category: this.productForm.category || 'Chung',
+                            unit: this.productForm.unit || 'Cái',
+                            price: this.productForm.price || 0
+                        };
+                        this.products.push(newProd);
+
+                        // Nếu có số lượng ban đầu > 0, tự động tạo phiếu nhập kho
+                        const initQty = Number(this.productForm.quantity || 0);
+                        if (initQty > 0) {
+                            const now = new Date();
+                            const dateStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
+                            const newTx = {
+                                id: 't_' + Date.now(),
+                                type: 'IMPORT',
+                                date: dateStr,
+                                sku: newProd.sku,
+                                barcode: newProd.barcode,
+                                name: newProd.name,
+                                quantity: initQty,
+                                unit: newProd.unit,
+                                price: newProd.price,
+                                partner: 'Nhập kho ban đầu',
+                                note: 'Tạo sản phẩm mới kèm số lượng'
+                            };
+                            this.transactions.unshift(newTx);
+
+                            // Đồng bộ lên Google Sheets
+                            this.syncToGoogleSheets({
+                                action: 'SAVE_TRANSACTION',
+                                type: 'IMPORT',
+                                sku: newProd.sku,
+                                barcode: newProd.barcode,
+                                name: newProd.name,
+                                quantity: initQty,
+                                unit: newProd.unit,
+                                category: newProd.category,
+                                price: newProd.price,
+                                partner: 'Nhập kho ban đầu',
+                                note: 'Tạo sản phẩm mới kèm số lượng'
+                            });
+                        }
+
+                        this.showNotification('Thêm sản phẩm mới và nhập kho thành công!', 'success');
                     }
 
                     this.saveToLocalStorage();

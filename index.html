@@ -1,463 +1,918 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Hệ Thống Quản Lý & Tra Cứu Đơn Hàng Kho Pro</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons CDN -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Html5-qrcode CDN -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <style>
-    /* Custom scrollbar cho table */
-    ::-webkit-scrollbar { height: 6px; width: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    #reader video { object-fit: cover !important; border-radius: 0.5rem; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Xuất - Nhập - Tồn Kho & Quét Mã Vạch</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Html5-qrcode for lightning-fast barcode scanning -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        [x-cloak] { display: none !important; }
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+        }
+    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen antialiased">
+<body class="bg-slate-100 min-h-screen pb-12" x-data="inventoryApp()">
 
-  <!-- Top Navigation Header -->
-  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-500/30">
-          <i data-lucide="box" class="w-6 h-6"></i>
-        </div>
-        <div>
-          <h1 class="text-base md:text-lg font-bold tracking-tight text-white leading-none">WMS Express Tracking</h1>
-          <p class="text-[11px] text-slate-400 mt-1">Hệ thống quản lý đơn kho SPX • GHN • Viettel Post • J&T</p>
-        </div>
-      </div>
-      
-      <div class="hidden md:flex items-center gap-2">
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Sẵn sàng hoạt động
-        </span>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Container -->
-  <main class="max-w-7xl mx-auto px-3 md:px-6 py-5 space-y-5">
-
-    <!-- Top Grid: Form Thêm Đơn + Biểu Đồ % Hình Tròn -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-      
-      <!-- Form Thêm Mã Vận Đơn (Chiếm 2 cột trên PC) -->
-      <section class="lg:col-span-2 bg-white p-4 md:p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm md:text-base font-bold text-slate-800 flex items-center gap-2">
-              <i data-lucide="barcode" class="w-5 h-5 text-indigo-600"></i> Tiếp Nhận Mã Vận Đơn
-            </h2>
-            <span class="text-xs text-slate-400">Nhập thủ công hoặc Quét mã</span>
-          </div>
-
-          <form id="addOrderForm" onsubmit="handleAddOrder(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <!-- Mã vận đơn -->
-            <div class="sm:col-span-2">
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Mã vận đơn (*)</label>
-              <div class="flex gap-2">
-                <input type="text" id="inputTracking" required placeholder="Dán hoặc quét mã tại đây..." 
-                       class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition font-mono font-medium" />
-                <button type="button" onclick="openScannerModal()" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition shrink-0">
-                  <i data-lucide="scan-line" class="w-4 h-4"></i> Quét
+    <!-- Header -->
+    <header class="bg-indigo-600 text-shadow shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white p-2 rounded-lg text-indigo-600 shadow">
+                    <i class="fa-solid fa-boxes-stacked text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-lg md:text-xl tracking-wide">QUẢN LÝ XUẤT - NHẬP - TỒN</h1>
+                    <p class="text-indigo-200 text-xs">Hệ thống quét mã vạch thông minh & đồng bộ tức thì</p>
+                </div>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <nav class="flex flex-wrap gap-1 bg-indigo-700 p-1 rounded-xl shadow-inner">
+                <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'bg-white text-indigo-600 shadow' : 'text-white hover:bg-indigo-600'" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-pie"></i> Tổng Quan
                 </button>
-              </div>
-            </div>
-
-            <!-- Đơn vị vận chuyển -->
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Đơn vị vận chuyển (*)</label>
-              <select id="inputCarrier" required class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium text-slate-700">
-                <option value="GHN">GHN (Giao Hàng Nhanh)</option>
-                <option value="SPX">SPX (Shopee Express)</option>
-                <option value="VIETTELPOST">Viettel Post</option>
-                <option value="JT">J&T Express</option>
-              </select>
-            </div>
-
-            <!-- Ghi chú -->
-            <div class="sm:col-span-2">
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Ghi chú kèm theo</label>
-              <input type="text" id="inputNote" placeholder="Ví dụ: Tên sản phẩm, tên khách hàng..." 
-                     class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition" />
-            </div>
-
-            <!-- Button Thêm -->
-            <div class="flex items-end">
-              <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2">
-                <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i> Lưu Vào Kho
-              </button>
-            </div>
-          </form>
+                <button @click="activeTab = 'import'" :class="activeTab === 'import' ? 'bg-white text-indigo-600 shadow' : 'text-white hover:bg-indigo-600'" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-cart-arrow-down"></i> Nhập Kho
+                </button>
+                <button @click="activeTab = 'export'" :class="activeTab === 'export' ? 'bg-white text-indigo-600 shadow' : 'text-white hover:bg-indigo-600'" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-truck-ramp-box"></i> Xuất Kho
+                </button>
+                <button @click="activeTab = 'products'" :class="activeTab === 'products' ? 'bg-white text-indigo-600 shadow' : 'text-white hover:bg-indigo-600'" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-box"></i> Sản Phẩm
+                </button>
+                <button @click="activeTab = 'history'" :class="activeTab === 'history' ? 'bg-white text-indigo-600 shadow' : 'text-white hover:bg-indigo-600'" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử
+                </button>
+            </nav>
         </div>
-      </section>
+    </header>
 
-      <!-- Biểu đồ Hình Tròn % (Donut Chart) Pro -->
-      <section class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Thống Kê Đơn Trong Ngày</h3>
-          <span class="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md" id="currentDateText">--/--/----</span>
-        </div>
-
-        <div class="flex items-center justify-around my-2 py-1">
-          <!-- Donut SVG -->
-          <div class="relative w-28 h-28 flex items-center justify-center">
-            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-              <!-- Vòng tròn nền -->
-              <path class="text-slate-100" stroke-width="3.8" stroke="currentColor" fill="none" 
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              <!-- Vòng tròn phần trăm có hiệu ứng -->
-              <path id="circleProgress" class="text-indigo-600 transition-all duration-1000 ease-out" 
-                    stroke-dasharray="0, 100" stroke-width="3.8" stroke-linecap="round" stroke="currentColor" fill="none" 
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            </svg>
-            <!-- Con số % chính giữa -->
-            <div class="absolute flex flex-col items-center justify-center text-center">
-              <span id="circlePercentText" class="text-xl font-extrabold text-slate-900 leading-none">0%</span>
-              <span class="text-[10px] text-slate-400 font-semibold mt-0.5">Tỷ lệ hôm nay</span>
-            </div>
-          </div>
-
-          <!-- Chi tiết chỉ số -->
-          <div class="space-y-2.5">
-            <div>
-              <p class="text-[11px] font-medium text-slate-400">Tổng đang theo dõi</p>
-              <p class="text-2xl font-black text-slate-800 leading-tight" id="statTotal">0</p>
-            </div>
-            <div class="border-t border-slate-100 pt-1.5">
-              <p class="text-[11px] font-medium text-indigo-600">Nhập trong hôm nay</p>
-              <p class="text-base font-bold text-slate-700" id="statTodayCount">0 <span class="text-xs font-normal text-slate-400">đơn</span></p>
-            </div>
-          </div>
-        </div>
-      </section>
-
+    <!-- Notification Toast -->
+    <div x-show="notification.show" x-transition class="fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl shadow-xl text-white font-medium text-sm flex items-center gap-3"
+         :class="notification.type === 'success' ? 'bg-emerald-600' : (notification.type === 'error' ? 'bg-rose-600' : 'bg-amber-600')" x-cloak>
+        <i :class="notification.type === 'success' ? 'fa-solid fa-circle-check' : (notification.type === 'error' ? 'fa-solid fa-circle-xmark' : 'fa-solid fa-triangle-exclamation')" class="text-lg"></i>
+        <span x-text="notification.message"></span>
     </div>
 
-    <!-- Bảng Danh Sách Đơn Hàng Kho -->
-    <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-      
-      <!-- Filter Bar -->
-      <div class="p-4 bg-slate-50/50 border-b border-slate-200/80 flex flex-col sm:flex-row justify-between items-center gap-3">
-        <div class="relative w-full sm:w-80">
-          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
-          <input type="text" id="searchInput" oninput="renderTable()" placeholder="Tìm kiếm mã vận đơn, ghi chú..." 
-                 class="w-full pl-10 pr-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition shadow-sm" />
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- ================= TAB 1: DASHBOARD & STOCK ================= -->
+        <div x-show="activeTab === 'dashboard'" x-cloak>
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng Sản Phẩm</p>
+                        <h3 class="text-2xl font-bold text-slate-800 mt-1" x-text="products.length">0</h3>
+                        <span class="text-xs text-indigo-600 font-medium mt-1 inline-block">Mã hàng quản lý</span>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
+                        <i class="fa-solid fa-box"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng Tồn Kho</p>
+                        <h3 class="text-2xl font-bold text-emerald-600 mt-1" x-text="totalStockCount">0</h3>
+                        <span class="text-xs text-emerald-600 font-medium mt-1 inline-block">Đang lưu kho</span>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
+                        <i class="fa-solid fa-cubes"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng Phiếu Giao Dịch</p>
+                        <h3 class="text-2xl font-bold text-sky-600 mt-1" x-text="transactions.length">0</h3>
+                        <span class="text-xs text-sky-600 font-medium mt-1 inline-block">Nhập & Xuất</span>
+                    </div>
+                    <div class="w-12 h-12 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Sắp Hết Hàng (&lt;5)</p>
+                        <h3 class="text-2xl font-bold text-rose-600 mt-1" x-text="lowStockCount">0</h3>
+                        <span class="text-xs text-rose-600 font-medium mt-1 inline-block">Cần nhập thêm</span>
+                    </div>
+                    <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Table & Search -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 class="font-bold text-lg text-slate-800">Báo Cáo Tồn Kho Tức Thời</h2>
+                        <p class="text-xs text-slate-500">Tự động liên kết chặt chẽ từ các giao dịch Nhập & Xuất</p>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <div class="relative w-full sm:w-72">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text" x-model="stockSearch" placeholder="Tìm tên hoặc mã barcode..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <button @click="exportCSV()" class="bg-slate-800 hover:bg-slate-900 text-white px-3.5 py-2 rounded-xl text-sm font-medium transition flex items-center gap-1.5 whitespace-nowrap">
+                            <i class="fa-solid fa-download"></i> Xuất Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                                <th class="py-3.5 px-4 font-semibold">Mã Barcode</th>
+                                <th class="py-3.5 px-4 font-semibold">Tên Sản Phẩm</th>
+                                <th class="py-3.5 px-4 font-semibold">Danh Mục</th>
+                                <th class="py-3.5 px-4 font-semibold text-center">ĐVT</th>
+                                <th class="py-3.5 px-4 font-semibold text-right">Tổng Nhập</th>
+                                <th class="py-3.5 px-4 font-semibold text-right">Tổng Xuất</th>
+                                <th class="py-3.5 px-4 font-semibold text-right">Tồn Kho</th>
+                                <th class="py-3.5 px-4 font-semibold text-center">Trạng Thái</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 text-sm">
+                            <template x-for="item in filteredStock" :key="item.id">
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="py-3 px-4 font-mono font-medium text-indigo-600" x-text="item.barcode"></td>
+                                    <td class="py-3 px-4 font-medium text-slate-800" x-text="item.name"></td>
+                                    <td class="py-3 px-4 text-slate-600" x-text="item.category"></td>
+                                    <td class="py-3 px-4 text-center text-slate-600" x-text="item.unit"></td>
+                                    <td class="py-3 px-4 text-right font-medium text-emerald-600" x-text="item.totalImport"></td>
+                                    <td class="py-3 px-4 text-right font-medium text-rose-600" x-text="item.totalExport"></td>
+                                    <td class="py-3 px-4 text-right font-bold" :class="item.stock <= 0 ? 'text-rose-600' : (item.stock < 5 ? 'text-amber-600' : 'text-slate-800')" x-text="item.stock"></td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold"
+                                              :class="item.stock <= 0 ? 'bg-rose-100 text-rose-700' : (item.stock < 5 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')"
+                                              x-text="item.stock <= 0 ? 'Hết hàng' : (item.stock < 5 ? 'Sắp hết' : 'Còn hàng')"></span>
+                                    </td>
+                                </tr>
+                            </template>
+                            <template x-if="filteredStock.length === 0">
+                                <tr>
+                                    <td colspan="8" class="py-8 text-center text-slate-400">Không tìm thấy sản phẩm nào phù hợp.</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-          <select id="filterCarrier" onchange="renderTable()" class="w-full sm:w-auto px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl font-medium text-slate-700 focus:outline-none shadow-sm">
-            <option value="ALL">Tất cả nhà vận chuyển</option>
-            <option value="GHN">Giao Hàng Nhanh (GHN)</option>
-            <option value="SPX">Shopee Express (SPX)</option>
-            <option value="VIETTELPOST">Viettel Post</option>
-            <option value="JT">J&T Express</option>
-          </select>
+
+        <!-- ================= TAB 2: NHẬP KHO ================= -->
+        <div x-show="activeTab === 'import'" x-cloak>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form Nhập Kho -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-cart-arrow-down text-indigo-600"></i> Phiếu Nhập Kho
+                        </h2>
+                        <button @click="startScanner('import')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-camera"></i> Quét Barcode
+                        </button>
+                    </div>
+
+                    <form @submit.prevent="submitTransaction('IMPORT')" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã Barcode sản phẩm</label>
+                            <div class="flex gap-2">
+                                <input type="text" x-model="form.barcode" @input="lookupProductByBarcode()" placeholder="Nhập hoặc quét barcode..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500 font-mono">
+                                <button type="button" @click="startScanner('import')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-sm shadow transition">
+                                    <i class="fa-solid fa-barcode"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Tên sản phẩm</label>
+                            <input type="text" x-model="form.name" placeholder="Tự động điền hoặc nhập mới..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500 bg-slate-50">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Số lượng nhập</label>
+                                <input type="number" min="1" x-model.number="form.quantity" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500 font-bold text-indigo-600">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Đơn vị tính</label>
+                                <input type="text" x-model="form.unit" placeholder="Cái, Hộp, Kg..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Danh mục</label>
+                                <input type="text" x-model="form.category" placeholder="Ví dụ: Điện tử..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Đơn giá nhập (VNĐ)</label>
+                                <input type="number" min="0" x-model.number="form.price" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Nhà cung cấp / Người giao</label>
+                            <input type="text" x-model="form.partner" placeholder="Tên nhà cung cấp..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Ghi chú</label>
+                            <textarea x-model="form.note" rows="2" placeholder="Ghi chú thêm..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl shadow transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-check"></i> Xác Nhận Nhập Kho
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Lịch sử nhập kho nhanh -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-600"></i> Lịch Sử Nhập Hàng Gần Đây
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-3 font-semibold">Thời gian</th>
+                                    <th class="py-3 px-3 font-semibold">Mã Barcode</th>
+                                    <th class="py-3 px-3 font-semibold">Sản Phẩm</th>
+                                    <th class="py-3 px-3 font-semibold text-right">SL Nhập</th>
+                                    <th class="py-3 px-3 font-semibold">Nhà Cung Cấp</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 text-sm">
+                                <template x-for="tx in importTransactions.slice(0, 10)" :key="tx.id">
+                                    <tr class="hover:bg-slate-50 transition">
+                                        <td class="py-2.5 px-3 text-slate-500 text-xs" x-text="tx.date"></td>
+                                        <td class="py-2.5 px-3 font-mono text-indigo-600 text-xs" x-text="tx.barcode"></td>
+                                        <td class="py-2.5 px-3 font-medium text-slate-800" x-text="tx.name"></td>
+                                        <td class="py-2.5 px-3 text-right font-bold text-emerald-600" x-text="'+' + tx.quantity + ' ' + tx.unit"></td>
+                                        <td class="py-2.5 px-3 text-slate-600 text-xs" x-text="tx.partner || '---'"></td>
+                                    </tr>
+                                </template>
+                                <template x-if="importTransactions.length === 0">
+                                    <tr>
+                                        <td colspan="5" class="py-6 text-center text-slate-400">Chưa có giao dịch nhập kho nào.</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
 
-      <!-- Table Content -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-100/70 text-[11px] uppercase font-bold text-slate-500 tracking-wider border-b border-slate-200">
-            <tr>
-              <th class="px-4 py-3.5 w-12 text-center">STT</th>
-              <th class="px-4 py-3.5">Mã Vận Đơn</th>
-              <th class="px-4 py-3.5">Đơn Vị VC</th>
-              <th class="px-4 py-3.5 min-w-[200px]">Ghi Chú (Bấm để sửa)</th>
-              <th class="px-4 py-3.5">Ngày Nhập Kho</th>
-              <th class="px-4 py-3.5 text-center">Thao Tác</th>
-            </tr>
-          </thead>
-          <tbody id="orderTableBody" class="divide-y divide-slate-100 text-slate-700 font-medium">
-            <!-- Render JS -->
-          </tbody>
-        </table>
-      </div>
-      
-      <!-- Empty State -->
-      <div id="emptyState" class="p-12 text-center hidden">
-        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
-          <i data-lucide="package-open" class="w-8 h-8"></i>
+        <!-- ================= TAB 3: XUẤT KHO ================= -->
+        <div x-show="activeTab === 'export'" x-cloak>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form Xuất Kho -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-truck-ramp-box text-rose-600"></i> Phiếu Xuất Kho
+                        </h2>
+                        <button @click="startScanner('export')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-camera"></i> Quét Barcode
+                        </button>
+                    </div>
+
+                    <form @submit.prevent="submitTransaction('EXPORT')" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã Barcode sản phẩm</label>
+                            <div class="flex gap-2">
+                                <input type="text" x-model="form.barcode" @input="lookupProductByBarcode()" placeholder="Nhập hoặc quét barcode..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500 font-mono">
+                                <button type="button" @click="startScanner('export')" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-sm shadow transition">
+                                    <i class="fa-solid fa-barcode"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Tên sản phẩm</label>
+                            <input type="text" x-model="form.name" placeholder="Chọn sản phẩm bằng barcode..." required readonly class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm bg-slate-50 text-slate-700">
+                        </div>
+
+                        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex justify-between items-center text-xs">
+                            <span class="text-amber-800 font-medium"><i class="fa-solid fa-circle-info"></i> Tồn kho hiện tại:</span>
+                            <span class="font-bold text-amber-900 text-sm" x-text="currentAvailableStock + ' ' + (form.unit || '')">0</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Số lượng xuất</label>
+                                <input type="number" min="1" :max="currentAvailableStock" x-model.number="form.quantity" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500 font-bold text-rose-600">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Đơn vị tính</label>
+                                <input type="text" x-model="form.unit" readonly class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm bg-slate-50 text-slate-600">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Khách hàng / Bộ phận nhận</label>
+                            <input type="text" x-model="form.partner" placeholder="Tên khách hàng hoặc bộ phận..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Ghi chú</label>
+                            <textarea x-model="form.note" rows="2" placeholder="Lý do xuất kho..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2.5 rounded-xl shadow transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-check"></i> Xác Nhận Xuất Kho
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Lịch sử xuất kho nhanh -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-rose-600"></i> Lịch Sử Xuất Hàng Gần Đây
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-3 font-semibold">Thời gian</th>
+                                    <th class="py-3 px-3 font-semibold">Mã Barcode</th>
+                                    <th class="py-3 px-3 font-semibold">Sản Phẩm</th>
+                                    <th class="py-3 px-3 font-semibold text-right">SL Xuất</th>
+                                    <th class="py-3 px-3 font-semibold">Khách Hàng</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 text-sm">
+                                <template x-for="tx in exportTransactions.slice(0, 10)" :key="tx.id">
+                                    <tr class="hover:bg-slate-50 transition">
+                                        <td class="py-2.5 px-3 text-slate-500 text-xs" x-text="tx.date"></td>
+                                        <td class="py-2.5 px-3 font-mono text-rose-600 text-xs" x-text="tx.barcode"></td>
+                                        <td class="py-2.5 px-3 font-medium text-slate-800" x-text="tx.name"></td>
+                                        <td class="py-2.5 px-3 text-right font-bold text-rose-600" x-text="'-' + tx.quantity + ' ' + tx.unit"></td>
+                                        <td class="py-2.5 px-3 text-slate-600 text-xs" x-text="tx.partner || '---'"></td>
+                                    </tr>
+                                </template>
+                                <template x-if="exportTransactions.length === 0">
+                                    <tr>
+                                        <td colspan="5" class="py-6 text-center text-slate-400">Chưa có giao dịch xuất kho nào.</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-        <p class="text-slate-600 font-semibold text-sm">Chưa tìm thấy đơn hàng nào</p>
-        <p class="text-slate-400 text-xs mt-1">Hãy thêm mã vận đơn mới hoặc quét mã vạch trên bưu kiện.</p>
-      </div>
-    </section>
 
-  </main>
+        <!-- ================= TAB 4: PRODUCTS ================= -->
+        <div x-show="activeTab === 'products'" x-cloak>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 class="font-bold text-lg text-slate-800">Danh Mục Sản Phẩm & Barcode</h2>
+                        <p class="text-xs text-slate-500">Quản lý danh sách sản phẩm, mã vạch và thông tin gốc</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="openProductModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow">
+                            <i class="fa-solid fa-plus"></i> Thêm Sản Phẩm Mới
+                        </button>
+                    </div>
+                </div>
 
-  <!-- Modal Quét Mã Vạch Chuẩn Đa Nền Tảng (Sửa lỗi màn hình đen) -->
-  <div id="scannerModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 transition-opacity">
-    <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-100 flex flex-col">
-      
-      <!-- Header Modal -->
-      <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-        <div class="flex items-center gap-2">
-          <i data-lucide="camera" class="w-5 h-5 text-indigo-600"></i>
-          <h3 class="font-bold text-slate-800 text-sm md:text-base">Quét Mã Vạch Bưu Kiện</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                                <th class="py-3.5 px-4 font-semibold">Mã Barcode</th>
+                                <th class="py-3.5 px-4 font-semibold">Tên Sản Phẩm</th>
+                                <th class="py-3.5 px-4 font-semibold">Danh Mục</th>
+                                <th class="py-3.5 px-4 font-semibold text-center">ĐVT</th>
+                                <th class="py-3.5 px-4 font-semibold text-right">Giá Nhập Gốc</th>
+                                <th class="py-3.5 px-4 font-semibold text-center">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 text-sm">
+                            <template x-for="p in products" :key="p.id">
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="py-3 px-4 font-mono font-medium text-indigo-600 flex items-center gap-2">
+                                        <i class="fa-solid fa-barcode text-slate-400"></i>
+                                        <span x-text="p.barcode"></span>
+                                    </td>
+                                    <td class="py-3 px-4 font-medium text-slate-800" x-text="p.name"></td>
+                                    <td class="py-3 px-4 text-slate-600" x-text="p.category"></td>
+                                    <td class="py-3 px-4 text-center text-slate-600" x-text="p.unit"></td>
+                                    <td class="py-3 px-4 text-right text-slate-600" x-text="formatCurrency(p.price) + ' đ'"></td>
+                                    <td class="py-3 px-4 text-center space-x-2">
+                                        <button @click="editProduct(p)" class="text-indigo-600 hover:text-indigo-800 p-1.5 rounded-lg hover:bg-indigo-50 transition" title="Sửa">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                        <button @click="deleteProduct(p.id)" class="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Xóa">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        <button onclick="closeScannerModal()" class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg transition">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
 
-      <!-- Live Video Viewport -->
-      <div class="p-4 bg-slate-900 relative flex flex-col items-center justify-center min-h-[280px]">
-        <div id="reader" class="w-full rounded-xl overflow-hidden bg-black border border-slate-700"></div>
-        <p id="scannerStatusText" class="text-xs text-slate-300 mt-3 text-center">Đang kết nối camera...</p>
-      </div>
+        <!-- ================= TAB 5: HISTORY ================= -->
+        <div x-show="activeTab === 'history'" x-cloak>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 class="font-bold text-lg text-slate-800">Lịch Sử Giao Dịch Toàn Bộ</h2>
+                        <p class="text-xs text-slate-500">Mọi thao tác Xuất và Nhập đều được lưu vết chi tiết</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="resetAllData()" class="bg-rose-50 text-rose-600 hover:bg-rose-100 px-3 py-2 rounded-xl text-xs font-semibold transition">
+                            <i class="fa-solid fa-rotate-right"></i> Khôi phục dữ liệu mẫu
+                        </button>
+                    </div>
+                </div>
 
-      <!-- Nút Chụp/Chọn Ảnh Dự Phòng (Đảm bảo 100% không lo bị đơ/đen) -->
-      <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2 text-center">
-        <p class="text-[11px] text-slate-500">Nếu camera không hiển thị, hãy chụp/chọn ảnh mã vạch trực tiếp:</p>
-        <label class="w-full bg-slate-800 hover:bg-slate-700 active:scale-98 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-sm">
-          <i data-lucide="image" class="w-4 h-4 text-yellow-400"></i> Chụp Hoặc Chọn Ảnh Mã Vạch
-          <input type="file" id="qrFileInput" accept="image/*" capture="environment" class="hidden" onchange="scanImageFile(this)" />
-        </label>
-      </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                                <th class="py-3.5 px-4 font-semibold">Loại Phiếu</th>
+                                <th class="py-3.5 px-4 font-semibold">Thời Gian</th>
+                                <th class="py-3.5 px-4 font-semibold">Barcode</th>
+                                <th class="py-3.5 px-4 font-semibold">Tên Sản Phẩm</th>
+                                <th class="py-3.5 px-4 font-semibold text-right">Số Lượng</th>
+                                <th class="py-3.5 px-4 font-semibold">Đối Tác (NCC / Khách)</th>
+                                <th class="py-3.5 px-4 font-semibold">Ghi Chú</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 text-sm">
+                            <template x-for="tx in transactions" :key="tx.id">
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="py-3 px-4">
+                                        <span class="px-2.5 py-1 rounded-full text-xs font-bold"
+                                              :class="tx.type === 'IMPORT' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'"
+                                              x-text="tx.type === 'IMPORT' ? '📥 NHẬP' : '📤 XUẤT'"></span>
+                                    </td>
+                                    <td class="py-3 px-4 text-slate-500 text-xs" x-text="tx.date"></td>
+                                    <td class="py-3 px-4 font-mono text-indigo-600" x-text="tx.barcode"></td>
+                                    <td class="py-3 px-4 font-medium text-slate-800" x-text="tx.name"></td>
+                                    <td class="py-3 px-4 text-right font-bold" :class="tx.type === 'IMPORT' ? 'text-emerald-600' : 'text-rose-600'" x-text="(tx.type === 'IMPORT' ? '+' : '-') + tx.quantity + ' ' + tx.unit"></td>
+                                    <td class="py-3 px-4 text-slate-600 text-xs" x-text="tx.partner || '---'"></td>
+                                    <td class="py-3 px-4 text-slate-500 text-xs" x-text="tx.note || '---'"></td>
+                                </tr>
+                            </template>
+                            <template x-if="transactions.length === 0">
+                                <tr>
+                                    <td colspan="7" class="py-8 text-center text-slate-400">Chưa có lịch sử giao dịch nào.</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
+    </main>
+
+    <!-- ================= BARCODE SCANNER MODAL ================= -->
+    <div x-show="scannerModal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" x-cloak>
+        <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl flex flex-col">
+            <div class="bg-indigo-600 px-5 py-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-base flex items-center gap-2">
+                    <i class="fa-solid fa-camera"></i> Quét Mã Barcode / QR
+                </h3>
+                <button @click="stopScanner()" class="text-white hover:text-indigo-200 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-4 bg-slate-900 flex flex-col items-center">
+                <div id="reader" class="w-full rounded-xl overflow-hidden bg-black min-h-[250px]"></div>
+                <p class="text-slate-300 text-xs text-center mt-3">Hướng camera điện thoại về phía mã vạch sản phẩm để quét siêu nhanh.</p>
+            </div>
+            <div class="p-4 bg-white border-t border-slate-200 flex justify-end">
+                <button @click="stopScanner()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl text-sm font-semibold transition">
+                    Đóng Camera
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- JavaScript Logic -->
-  <script>
-    let orders = JSON.parse(localStorage.getItem('my_orders_v3')) || [
-      { trackingNo: '862490685404', carrier: 'JT', dateAdded: new Date().toLocaleDateString('vi-VN'), note: 'Đơn hàng mẫu J&T' }
-    ];
-    let html5QrCode = null;
+    <!-- ================= PRODUCT MODAL ================= -->
+    <div x-show="productModal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" x-cloak>
+        <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div class="bg-indigo-600 px-5 py-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-base" x-text="isEditingProduct ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'"></h3>
+                <button @click="productModal = false" class="text-white hover:text-indigo-200 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form @submit.prevent="saveProduct()" class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã Barcode</label>
+                    <div class="flex gap-2">
+                        <input type="text" x-model="productForm.barcode" required placeholder="Nhập hoặc quét barcode..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-mono focus:outline-none focus:border-indigo-500">
+                        <button type="button" @click="startScannerForProduct()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-sm shadow">
+                            <i class="fa-solid fa-camera"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Tên sản phẩm</label>
+                    <input type="text" x-model="productForm.name" required placeholder="Tên sản phẩm..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Danh mục</label>
+                        <input type="text" x-model="productForm.category" placeholder="Danh mục..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Đơn vị tính</label>
+                        <input type="text" x-model="productForm.unit" required placeholder="Cái, Hộp..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Giá nhập gốc (VNĐ)</label>
+                    <input type="number" min="0" x-model.number="productForm.price" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="flex justify-end gap-3 pt-3 border-t border-slate-200">
+                    <button type="button" @click="productModal = false" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl text-sm font-semibold transition">Hủy</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition">Lưu Lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    document.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      document.getElementById('currentDateText').innerText = new Date().toLocaleDateString('vi-VN');
-      renderTable();
-      updateStats();
-    });
+    <!-- Application Logic Script -->
+    <script>
+        function inventoryApp() {
+            return {
+                activeTab: 'dashboard',
+                stockSearch: '',
+                scannerModal: false,
+                scannerContext: 'import', // 'import', 'export', 'product'
+                html5QrCode: null,
 
-    function saveToLocalStorage() {
-      localStorage.setItem('my_orders_v3', JSON.stringify(orders));
-      renderTable();
-      updateStats();
-    }
+                productModal: false,
+                isEditingProduct: false,
 
-    // Thêm đơn hàng
-    function handleAddOrder(e) {
-      e.preventDefault();
-      const trackingNo = document.getElementById('inputTracking').value.trim();
-      const carrier = document.getElementById('inputCarrier').value;
-      const note = document.getElementById('inputNote').value.trim();
+                // Default Sample Data
+                products: [
+                    { id: '1', barcode: '8934602001111', name: 'Nước ngọt Coca Cola lon 330ml', category: 'Đồ uống', unit: 'Lon', price: 9500 },
+                    { id: '2', barcode: '8934602002222', name: 'Bánh quy Orion ChocoPie hộp 12', category: 'Bánh kẹo', unit: 'Hộp', price: 48000 },
+                    { id: '3', barcode: '8934602003333', name: 'Mì gói Hảo Hảo chua cay thùng 30', category: 'Thực phẩm khô', unit: 'Thùng', price: 115000 },
+                    { id: '4', barcode: '8934602004444', name: 'Dầu gội Clear Men 650ml', category: 'Hóa mỹ phẩm', unit: 'Chai', price: 142000 }
+                ],
 
-      if (!trackingNo) return;
+                transactions: [
+                    { id: 't1', type: 'IMPORT', date: '2026-06-01 08:30', barcode: '8934602001111', name: 'Nước ngọt Coca Cola lon 330ml', quantity: 100, unit: 'Lon', price: 9500, partner: 'Công ty Coca Cola VN', note: 'Nhập kho đầu tháng' },
+                    { id: 't2', type: 'IMPORT', date: '2026-06-01 09:15', barcode: '8934602002222', name: 'Bánh quy Orion ChocoPie hộp 12', quantity: 50, unit: 'Hộp', price: 48000, partner: 'Nhà phân phối Orion', note: 'Nhập hàng mới' },
+                    { id: 't3', type: 'EXPORT', date: '2026-06-02 14:00', barcode: '8934602001111', name: 'Nước ngọt Coca Cola lon 330ml', quantity: 20, unit: 'Lon', partner: 'Cửa hàng tạp hóa A', note: 'Xuất bán lẻ' },
+                    { id: 't4', type: 'IMPORT', date: '2026-06-03 10:00', barcode: '8934602003333', name: 'Mì gói Hảo Hảo chua cay thùng 30', quantity: 30, unit: 'Thùng', price: 115000, partner: 'Acecook Việt Nam', note: 'Nhập kho' },
+                    { id: 't5', type: 'EXPORT', date: '2026-06-04 16:30', barcode: '8934602002222', name: 'Bánh quy Orion ChocoPie hộp 12', quantity: 12, unit: 'Hộp', partner: 'Siêu thị mini B', note: 'Xuất sỉ' }
+                ],
 
-      const newOrder = {
-        trackingNo,
-        carrier,
-        dateAdded: new Date().toLocaleDateString('vi-VN'),
-        note
-      };
+                form: {
+                    barcode: '',
+                    name: '',
+                    quantity: 1,
+                    unit: 'Cái',
+                    category: '',
+                    price: 0,
+                    partner: '',
+                    note: ''
+                },
 
-      orders.unshift(newOrder);
-      saveToLocalStorage();
+                productForm: {
+                    id: '',
+                    barcode: '',
+                    name: '',
+                    category: '',
+                    unit: 'Cái',
+                    price: 0
+                },
 
-      document.getElementById('inputTracking').value = '';
-      document.getElementById('inputNote').value = '';
-    }
+                notification: {
+                    show: false,
+                    message: '',
+                    type: 'success'
+                },
 
-    // Sửa ghi chú trực tiếp
-    function updateNote(index, value) {
-      orders[index].note = value;
-      localStorage.setItem('my_orders_v3', JSON.stringify(orders));
-    }
+                init() {
+                    // Load from localStorage if available
+                    const savedProducts = localStorage.getItem('inv_products');
+                    const savedTransactions = localStorage.getItem('inv_transactions');
+                    if (savedProducts) this.products = JSON.parse(savedProducts);
+                    if (savedTransactions) this.transactions = JSON.parse(savedTransactions);
+                },
 
-    // Xóa đơn hàng
-    function deleteOrder(index) {
-      if (confirm('Bạn có chắc chắn muốn xóa mã vận đơn này khỏi danh sách?')) {
-        orders.splice(index, 1);
-        saveToLocalStorage();
-      }
-    }
+                saveToLocalStorage() {
+                    localStorage.setItem('inv_products', JSON.stringify(this.products));
+                    localStorage.setItem('inv_transactions', JSON.stringify(this.transactions));
+                },
 
-    // Cập nhật Bảng
-    function renderTable() {
-      const tbody = document.getElementById('orderTableBody');
-      const emptyState = document.getElementById('emptyState');
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const filterCarrier = document.getElementById('filterCarrier').value;
+                showNotification(message, type = 'success') {
+                    this.notification.message = message;
+                    this.notification.type = type;
+                    this.notification.show = true;
+                    setTimeout(() => {
+                        this.notification.show = false;
+                    }, 3000);
+                },
 
-      tbody.innerHTML = '';
+                // Calculate Stock Data linked tightly with transactions
+                get stockList() {
+                    return this.products.map(p => {
+                        const pTransactions = this.transactions.filter(t => t.barcode === p.barcode);
+                        const totalImport = pTransactions.filter(t => t.type === 'IMPORT').reduce((sum, t) => sum + t.quantity, 0);
+                        const totalExport = pTransactions.filter(t => t.type === 'EXPORT').reduce((sum, t) => sum + t.quantity, 0);
+                        const stock = totalImport - totalExport;
+                        return {
+                            ...p,
+                            totalImport,
+                            totalExport,
+                            stock
+                        };
+                    });
+                },
 
-      const filteredOrders = orders.filter(item => {
-        const matchSearch = item.trackingNo.toLowerCase().includes(search) || (item.note && item.note.toLowerCase().includes(search));
-        const matchCarrier = filterCarrier === 'ALL' || item.carrier === filterCarrier;
-        return matchSearch && matchCarrier;
-      });
+                get filteredStock() {
+                    if (!this.stockSearch) return this.stockList;
+                    const q = this.stockSearch.toLowerCase();
+                    return this.stockList.filter(item => item.name.toLowerCase().includes(q) || item.barcode.toLowerCase().includes(q) || item.category.toLowerCase().includes(q));
+                },
 
-      if (filteredOrders.length === 0) {
-        emptyState.classList.remove('hidden');
-      } else {
-        emptyState.classList.add('hidden');
-      }
+                get totalStockCount() {
+                    return this.stockList.reduce((sum, item) => sum + item.stock, 0);
+                },
 
-      filteredOrders.forEach((item, index) => {
-        const realIndex = orders.indexOf(item);
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50/80 transition border-b border-slate-100/80";
+                get lowStockCount() {
+                    return this.stockList.filter(item => item.stock < 5).length;
+                },
 
-        tr.innerHTML = `
-          <td class="px-4 py-3.5 text-slate-400 text-xs text-center font-mono">${index + 1}</td>
-          <td class="px-4 py-3.5 font-mono font-bold text-slate-800 text-sm tracking-wide">${item.trackingNo}</td>
-          <td class="px-4 py-3.5">${getCarrierBadge(item.carrier)}</td>
-          <td class="px-4 py-3.5">
-            <input type="text" value="${item.note || ''}" onchange="updateNote(${realIndex}, this.value)" 
-                   class="w-full bg-transparent border-b border-transparent hover:border-indigo-300 focus:border-indigo-600 focus:bg-white focus:outline-none text-xs text-slate-700 py-1 px-1 rounded transition" 
-                   placeholder="Thêm ghi chú..." />
-          </td>
-          <td class="px-4 py-3.5 text-xs text-slate-500 font-medium">${item.dateAdded}</td>
-          <td class="px-4 py-3.5 text-center">
-            <button onclick="deleteOrder(${realIndex})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Xóa đơn">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+                get importTransactions() {
+                    return this.transactions.filter(t => t.type === 'IMPORT');
+                },
 
-      lucide.createIcons();
-    }
+                get exportTransactions() {
+                    return this.transactions.filter(t => t.type === 'EXPORT');
+                },
 
-    // Badge Nhà Vận Chuyển Pro
-    function getCarrierBadge(carrier) {
-      const badges = {
-        'GHN': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60">GHN</span>',
-        'SPX': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200/60">SPX</span>',
-        'VIETTELPOST': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-red-50 text-red-700 border border-red-200/60">Viettel Post</span>',
-        'JT': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">J&T Express</span>'
-      };
-      return badges[carrier] || carrier;
-    }
+                get currentAvailableStock() {
+                    if (!this.form.barcode) return 0;
+                    const found = this.stockList.find(s => s.barcode === this.form.barcode);
+                    return found ? found.stock : 0;
+                },
 
-    // Cập nhật Thống kê Biểu Đồ Tròn SVG
-    function updateStats() {
-      const total = orders.length;
-      const todayStr = new Date().toLocaleDateString('vi-VN');
-      const todayCount = orders.filter(o => o.dateAdded === todayStr).length;
-      const percent = total > 0 ? Math.round((todayCount / total) * 100) : 0;
+                lookupProductByBarcode() {
+                    const bc = this.form.barcode.trim();
+                    if (!bc) return;
+                    const foundProd = this.products.find(p => p.barcode === bc);
+                    if (foundProd) {
+                        this.form.name = foundProd.name;
+                        this.form.unit = foundProd.unit;
+                        this.form.category = foundProd.category;
+                        if (this.activeTab === 'import') {
+                            this.form.price = foundProd.price;
+                        }
+                    }
+                },
 
-      document.getElementById('statTotal').innerText = total;
-      document.getElementById('statTodayCount').innerText = todayCount;
-      document.getElementById('circlePercentText').innerText = percent + '%';
+                submitTransaction(type) {
+                    if (!this.form.barcode || !this.form.name || this.form.quantity <= 0) {
+                        this.showNotification('Vui lòng điền đầy đủ thông tin hợp lệ!', 'error');
+                        return;
+                    }
 
-      // Cập nhật đường cong SVG
-      const circleProgress = document.getElementById('circleProgress');
-      circleProgress.setAttribute('stroke-dasharray', `${percent}, 100`);
-    }
+                    // If export, check stock availability
+                    if (type === 'EXPORT') {
+                        if (this.form.quantity > this.currentAvailableStock) {
+                            this.showNotification('Số lượng xuất vượt quá tồn kho hiện tại (' + this.currentAvailableStock + ')!', 'error');
+                            return;
+                        }
+                    }
 
-    // --- Xử lý Camera & Quét Mã Vạch Chuẩn ---
-    function openScannerModal() {
-      const modal = document.getElementById('scannerModal');
-      modal.classList.remove('hidden');
-      document.getElementById('scannerStatusText').innerText = "Đang khởi tạo camera...";
+                    // Ensure product exists in product catalog or auto-add
+                    let existingProd = this.products.find(p => p.barcode === this.form.barcode);
+                    if (!existingProd) {
+                        this.products.push({
+                            id: Date.now().toString(),
+                            barcode: this.form.barcode,
+                            name: this.form.name,
+                            category: this.form.category || 'Chung',
+                            unit: this.form.unit || 'Cái',
+                            price: this.form.price || 0
+                        });
+                    }
 
-      // Trễ 150ms để DOM vẽ xong kích thước khung #reader trước khi bật camera
-      setTimeout(() => {
-        if (html5QrCode) {
-          try { html5QrCode.clear(); } catch(e){}
+                    // Create transaction record
+                    const now = new Date();
+                    const dateStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
+                    const newTx = {
+                        id: 't_' + Date.now(),
+                        type: type,
+                        date: dateStr,
+                        barcode: this.form.barcode,
+                        name: this.form.name,
+                        quantity: this.form.quantity,
+                        unit: this.form.unit,
+                        price: this.form.price || 0,
+                        partner: this.form.partner,
+                        note: this.form.note
+                    };
+
+                    this.transactions.unshift(newTx);
+                    this.saveToLocalStorage();
+
+                    this.showNotification(type === 'IMPORT' ? 'Nhập kho thành công!' : 'Xuất kho thành công!', 'success');
+
+                    // Reset form partially
+                    this.form.barcode = '';
+                    this.form.name = '';
+                    this.form.quantity = 1;
+                    this.form.partner = '';
+                    this.form.note = '';
+                },
+
+                openProductModal() {
+                    this.isEditingProduct = false;
+                    this.productForm = { id: '', barcode: '', name: '', category: '', unit: 'Cái', price: 0 };
+                    this.productModal = true;
+                },
+
+                editProduct(p) {
+                    this.isEditingProduct = true;
+                    this.productForm = { ...p };
+                    this.productModal = true;
+                },
+
+                saveProduct() {
+                    if (!this.productForm.barcode || !this.productForm.name) {
+                        this.showNotification('Vui lòng nhập mã barcode và tên sản phẩm!', 'error');
+                        return;
+                    }
+
+                    if (this.isEditingProduct) {
+                        const idx = this.products.findIndex(p => p.id === this.productForm.id);
+                        if (idx !== -1) {
+                            this.products[idx] = { ...this.productForm };
+                        }
+                        this.showNotification('Cập nhật sản phẩm thành công!', 'success');
+                    } else {
+                        const exists = this.products.some(p => p.barcode === this.productForm.barcode);
+                        if (exists) {
+                            this.showNotification('Mã barcode này đã tồn tại trong hệ thống!', 'error');
+                            return;
+                        }
+                        this.products.push({
+                            ...this.productForm,
+                            id: Date.now().toString()
+                        });
+                        this.showNotification('Thêm sản phẩm mới thành công!', 'success');
+                    }
+
+                    this.saveToLocalStorage();
+                    this.productModal = false;
+                },
+
+                deleteProduct(id) {
+                    if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
+                        this.products = this.products.filter(p => p.id !== id);
+                        this.saveToLocalStorage();
+                        this.showNotification('Đã xóa sản phẩm.', 'success');
+                    }
+                },
+
+                resetAllData() {
+                    if (confirm('Khôi phục dữ liệu mẫu sẽ làm mới toàn bộ danh sách sản phẩm và lịch sử giao dịch. Tiếp tục?')) {
+                        localStorage.removeItem('inv_products');
+                        localStorage.removeItem('inv_transactions');
+                        location.reload();
+                    }
+                },
+
+                exportCSV() {
+                    let csv = '\uFEFFMã Barcode,Tên Sản Phẩm,Danh Mục,ĐVT,Tổng Nhập,Tổng Xuất,Tồn Kho\n';
+                    this.stockList.forEach(item => {
+                        csv += `"${item.barcode}","${item.name}","${item.category}","${item.unit}",${item.totalImport},${item.totalExport},${item.stock}\n`;
+                    });
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'bao_cao_ton_kho_' + new Date().toISOString().slice(0, 10) + '.csv';
+                    a.click();
+                    this.showNotification('Đã xuất file Excel/CSV thành công!', 'success');
+                },
+
+                // Barcode Scanner Integration using Html5Qrcode
+                startScanner(context) {
+                    this.scannerContext = context;
+                    this.scannerModal = true;
+                    setTimeout(() => {
+                        if (this.html5QrCode) {
+                            try { this.html5QrCode.stop(); } catch(e){}
+                        }
+                        this.html5QrCode = new Html5Qrcode("reader");
+                        const config = { fps: 15, qrbox: { width: 250, height: 150 } };
+                        this.html5QrCode.start(
+                            { facingMode: "environment" },
+                            config,
+                            (decodedText, decodedResult) => {
+                                // Beep sound on scan
+                                this.playBeep();
+                                this.onScanSuccess(decodedText);
+                            },
+                            (errorMessage) => {
+                                // scanning in progress
+                            }
+                        ).catch((err) => {
+                            console.error("Unable to start scanning.", err);
+                            this.showNotification('Không thể mở camera thiết bị. Vui lòng cấp quyền camera.', 'error');
+                        });
+                    }, 300);
+                },
+
+                startScannerForProduct() {
+                    this.scannerContext = 'product';
+                    this.scannerModal = true;
+                    setTimeout(() => {
+                        if (this.html5QrCode) {
+                            try { this.html5QrCode.stop(); } catch(e){}
+                        }
+                        this.html5QrCode = new Html5Qrcode("reader");
+                        const config = { fps: 15, qrbox: { width: 250, height: 150 } };
+                        this.html5QrCode.start(
+                            { facingMode: "environment" },
+                            config,
+                            (decodedText, decodedResult) => {
+                                this.playBeep();
+                                this.productForm.barcode = decodedText;
+                                this.stopScanner();
+                                this.showNotification('Quét barcode thành công: ' + decodedText, 'success');
+                            },
+                            (err) => {}
+                        ).catch((err) => {
+                            this.showNotification('Không thể mở camera thiết bị.', 'error');
+                        });
+                    }, 300);
+                },
+
+                stopScanner() {
+                    if (this.html5QrCode) {
+                        this.html5QrCode.stop().then(() => {
+                            this.scannerModal = false;
+                        }).catch(err => {
+                            this.scannerModal = false;
+                        });
+                    } else {
+                        this.scannerModal = false;
+                    }
+                },
+
+                onScanSuccess(decodedText) {
+                    this.stopScanner();
+                    this.form.barcode = decodedText;
+                    this.lookupProductByBarcode();
+                    this.showNotification('Quét mã thành công: ' + decodedText, 'success');
+                },
+
+                playBeep() {
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.type = 'sine';
+                        osc.frequency.value = 880;
+                        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.1);
+                    } catch(e) {}
+                },
+
+                formatCurrency(val) {
+                    return new Intl.NumberFormat('vi-VN').format(val || 0);
+                }
+            }
         }
-
-        html5QrCode = new Html5Qrcode("reader");
-
-        // Cấu hình quét tối ưu
-        const config = { 
-          fps: 60, 
-          qrbox: { width: 260, height: 130 }
-        };
-
-        // Ưu tiên chọn Camera sau
-        Html5Qrcode.getCameras().then(devices => {
-          if (devices && devices.length > 0) {
-            // Lấy camera sau cùng (thường là camera lưng)
-            let backCamera = devices[devices.length - 1];
-            html5QrCode.start(
-              backCamera.id, 
-              config, 
-              onScanSuccess, 
-              onScanFailure
-            ).catch(err => fallbackCameraStart(config));
-          } else {
-            fallbackCameraStart(config);
-          }
-        }).catch(err => {
-          fallbackCameraStart(config);
-        });
-
-      }, 150);
-    }
-
-    function fallbackCameraStart(config) {
-      html5QrCode.start(
-        { facingMode: "environment" }, 
-        config, 
-        onScanSuccess, 
-        onScanFailure
-      ).then(() => {
-        document.getElementById('scannerStatusText').innerText = "Hướng camera vào mã vạch bưu kiện";
-      }).catch(err => {
-        document.getElementById('scannerStatusText').innerText = "Không thể mở camera live. Vui lòng chọn ảnh bên dưới.";
-      });
-    }
-
-    function onScanSuccess(decodedText) {
-      document.getElementById('inputTracking').value = decodedText;
-      closeScannerModal();
-    }
-
-    function onScanFailure(error) {
-      // Bỏ qua lỗi quét dở khung hình
-    }
-
-    // Quét mã bằng ảnh chụp trực tiếp (Phương án dự phòng 100% thành công)
-    function scanImageFile(input) {
-      if (input.files && input.files.length > 0) {
-        const imageFile = input.files[0];
-        document.getElementById('scannerStatusText').innerText = "Đang phân tích hình ảnh...";
-
-        if (!html5QrCode) {
-          html5QrCode = new Html5Qrcode("reader");
-        }
-
-        html5QrCode.scanFile(imageFile, true)
-          .then(decodedText => {
-            onScanSuccess(decodedText);
-          })
-          .catch(err => {
-            alert("Không tìm thấy mã vạch rõ ràng trong ảnh. Vui lòng thử chụp lại cận cảnh.");
-            document.getElementById('scannerStatusText').innerText = "Thử lại hoặc dùng camera trực tiếp.";
-          });
-      }
-    }
-
-    function closeScannerModal() {
-      document.getElementById('scannerModal').classList.add('hidden');
-      if (html5QrCode) {
-        try {
-          html5QrCode.stop().then(() => {
-            html5QrCode.clear();
-            html5QrCode = null;
-          }).catch(() => {
-            html5QrCode.clear();
-            html5QrCode = null;
-          });
-        } catch(e) {
-          html5QrCode = null;
-        }
-      }
-    }
-  </script>
+    </script>
 </body>
 </html>

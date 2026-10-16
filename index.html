@@ -17,6 +17,14 @@
         @media print {
             body { background: white; }
             .no-print { display: none !important; }
+            .export-page {
+                border: 2px solid #1e40af !important;
+                padding: 20mm !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                min-height: 100vh !important;
+            }
         }
     </style>
 </head>
@@ -31,7 +39,7 @@
                 </div>
                 <div>
                     <h1 class="text-white font-bold text-lg md:text-xl tracking-wide">QUẢN LÝ XUẤT - NHẬP - TỒN</h1>
-                    <p class="text-indigo-200 text-xs">Hệ thống quét mã vạch thông minh & liên kết chặt chẽ</p>
+                    <p class="text-indigo-200 text-xs">Hệ thống quét mã vạch thông minh & Xuất Phiếu Hi Sports</p>
                 </div>
             </div>
             
@@ -126,8 +134,8 @@
                             </span>
                             <input type="text" x-model="stockSearch" placeholder="Tìm tên hoặc mã barcode..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                         </div>
-                        <button @click="exportCSV()" class="bg-slate-800 hover:bg-slate-900 text-white px-3.5 py-2 rounded-xl text-sm font-medium transition flex items-center gap-1.5 whitespace-nowrap">
-                            <i class="fa-solid fa-download"></i> Xuất Excel
+                        <button @click="exportWordDocx()" class="bg-blue-800 hover:bg-blue-900 text-white px-3.5 py-2 rounded-xl text-sm font-medium transition flex items-center gap-1.5 whitespace-nowrap shadow">
+                            <i class="fa-solid fa-file-word"></i> Xuất File Word (Hi Sports)
                         </button>
                     </div>
                 </div>
@@ -303,7 +311,7 @@
                     </div>
 
                     <form @submit.prevent="submitTransaction('EXPORT')" class="space-y-4">
-                        <!-- Thanh tìm kiếm sản phẩm thông minh thay cho dropdown cũ -->
+                        <!-- Thanh tìm kiếm sản phẩm thông minh -->
                         <div class="relative" x-data="{ openDropdown: false }">
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Tìm kiếm & chọn sản phẩm trong kho</label>
                             <div class="relative">
@@ -372,7 +380,7 @@
 
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Mã đơn hàng</label>
-                            <input type="text" x-model="form.partner" placeholder="Nhập mã đơn..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500">
+                            <input type="text" x-model="form.partner" placeholder="Nhập..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-rose-500">
                         </div>
 
                         <div>
@@ -913,18 +921,171 @@
                     }
                 },
 
-                exportCSV() {
-                    let csv = '\uFEFFMã Barcode,Tên Sản Phẩm,Danh Mục,ĐVT,Tổng Nhập,Tổng Xuất,Tồn Kho\n';
-                    this.stockList.forEach(item => {
-                        csv += `"${item.barcode}","${item.name}","${item.category}","${item.unit}",${item.totalImport},${item.totalExport},${item.stock}\n`;
+                // Export to Word document format following Hi Sports template (CÔNG TY TNHH QUANG CHÂU TRADING - HI SPORTS)
+                exportWordDocx() {
+                    const todayStr = new Date().toLocaleDateString('vi-VN');
+                    let tableRows = '';
+                    this.stockList.forEach((item, index) => {
+                        tableRows += `
+                            <tr>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${index + 1}</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; font-family: monospace; color: #1e3a8a;">${item.barcode}</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">${item.name}</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${item.unit}</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right; color: #047857;">${item.totalImport}</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right; color: #be123c;">${item.totalExport}</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right; font-weight: bold;">${item.stock}</td>
+                            </tr>
+                        `;
                     });
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+                    const htmlContent = `
+                        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/1999/xhtml">
+                        <head>
+                            <meta charset="utf-8">
+                            <title>Báo Cáo Tồn Kho - Hi Sports</title>
+                            <style>
+                                @page {
+                                    size: A4;
+                                    margin: 20mm;
+                                    mso-page-orientation: portrait;
+                                }
+                                body {
+                                    font-family: 'Times New Roman', Times, serif;
+                                    font-size: 13pt;
+                                    color: #000000;
+                                    line-height: 1.3;
+                                    margin: 0;
+                                    padding: 0;
+                                }
+                                .letterhead-border {
+                                    border: 2px solid #1e40af;
+                                    padding: 20px;
+                                    min-height: 950px;
+                                    position: relative;
+                                }
+                                .header-table {
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    border-bottom: 2px solid #1e40af;
+                                    padding-bottom: 10px;
+                                    margin-bottom: 20px;
+                                }
+                                .company-name {
+                                    font-size: 14pt;
+                                    font-weight: bold;
+                                    color: #1e3a8a;
+                                    text-transform: uppercase;
+                                }
+                                .brand-logo {
+                                    font-size: 20pt;
+                                    font-weight: 900;
+                                    color: #1e40af;
+                                    text-align: right;
+                                    letter-spacing: 1px;
+                                }
+                                .title {
+                                    text-align: center;
+                                    font-size: 18pt;
+                                    font-weight: bold;
+                                    color: #1e3a8a;
+                                    margin: 15px 0 5px 0;
+                                    text-transform: uppercase;
+                                }
+                                .date-sub {
+                                    text-align: center;
+                                    font-size: 11pt;
+                                    font-style: italic;
+                                    margin-bottom: 20px;
+                                    color: #475569;
+                                }
+                                table.data-table {
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    margin-top: 10px;
+                                }
+                                table.data-table th {
+                                    background-color: #1e40af;
+                                    color: #ffffff;
+                                    border: 1px solid #1e40af;
+                                    padding: 10px 8px;
+                                    font-size: 11pt;
+                                    text-transform: uppercase;
+                                    text-align: center;
+                                }
+                                .footer {
+                                    position: absolute;
+                                    bottom: 10px;
+                                    left: 20px;
+                                    right: 20px;
+                                    border-top: 1px solid #1e40af;
+                                    padding-top: 8px;
+                                    font-size: 9pt;
+                                    color: #1e3a8a;
+                                    text-align: center;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="letterhead-border">
+                                <table class="header-table">
+                                    <tr>
+                                        <td>
+                                            <div class="company-name">CÔNG TY TNHH QUANG CHÂU TRADING</div>
+                                        </td>
+                                        <td>
+                                            <div class="brand-logo">HI SPORTS</div>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <div class="title">BÁO CÁO XUẤT - NHẬP - TỒN KHO</div>
+                                <div class="date-sub">Ngày lập báo cáo: ${todayStr}</div>
+
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>STT</th>
+                                            <th>Mã Barcode</th>
+                                            <th>Tên Sản Phẩm</th>
+                                            <th>ĐVT</th>
+                                            <th>Tổng Nhập</th>
+                                            <th>Tổng Xuất</th>
+                                            <th>Tồn Kho</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${tableRows}
+                                    </tbody>
+                                </table>
+
+                                <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                                    <div style="float: left; text-align: center; width: 45%;">
+                                        <p style="font-weight: bold; margin-bottom: 50px;">Người Lập Phiếu</p>
+                                        <p style="font-style: italic;">(Ký, ghi rõ họ tên)</p>
+                                    </div>
+                                    <div style="float: right; text-align: center; width: 45%;">
+                                        <p style="font-weight: bold; margin-bottom: 50px;">Quản Lý Kho</p>
+                                        <p style="font-style: italic;">(Ký, ghi rõ họ tên)</p>
+                                    </div>
+                                    <div style="clear: both;"></div>
+                                </div>
+
+                                <div class="footer">
+                                    <b>HI INFO</b> &nbsp;|&nbsp; hisports.vn &nbsp;|&nbsp; 0985551549 &nbsp;|&nbsp; info@sports.vn &nbsp;|&nbsp; 41 đường Số 29, phường Hiệp Bình, Thành phố Hồ Chí Minh
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                    `;
+
+                    const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'bao_cao_ton_kho_' + new Date().toISOString().slice(0, 10) + '.csv';
+                    a.download = 'Bao_Cao_Xuat_Nhap_Ton_HiSports_' + new Date().toISOString().slice(0, 10) + '.doc';
                     a.click();
-                    this.showNotification('Đã xuất file Excel/CSV thành công!', 'success');
+                    this.showNotification('Đã xuất file Word chuẩn form Hi Sports thành công!', 'success');
                 },
 
                 startScanner(context) {
@@ -946,7 +1107,7 @@
                             (errorMessage) => {}
                         ).catch((err) => {
                             console.error("Unable to start scanning.", err);
-                            this.showNotification('Không thể mở camera thiết bị. Vutil lòng cấp quyền camera.', 'error');
+                            this.showNotification('Không thể mở camera thiết bị. Vui lòng cấp quyền camera.', 'error');
                         });
                     }, 300);
                 },
@@ -977,13 +1138,7 @@
                 },
 
                 stopScanner() {
-                    if (this.html5Tag && this.html5QrCode) {
-                        this.html5QrCode.stop().then(() => {
-                            this.scannerModal = false;
-                        }).catch(err => {
-                            this.scannerModal = false;
-                        });
-                    } else if (this.html5QrCode) {
+                    if (this.html5QrCode) {
                         this.html5QrCode.stop().catch(() => {}).finally(() => {
                             this.scannerModal = false;
                         });
